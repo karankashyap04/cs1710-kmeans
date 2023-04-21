@@ -36,6 +36,7 @@ pred numberWellformed {
         n.digit <= 2 and n.digit >= -2
         (n.digit = 2 or n.digit = -2) implies n.decimal = 0
         -- grid goes from (-2.0, -2.0) to (2.0, 2.0)
+        n.decimal >= 0 -- decimal should never be negative (to make a negative number, make the digit negative)
     }
 }
 

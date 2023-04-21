@@ -40,6 +40,19 @@ pred numberWellformed {
     }
 }
 
+// IMPLEMENTING CUSTOM ARITHMETIC OPERATIONS DEFINED OVER Number sig
+fun plus[n1, n2: Number]: Number {
+    let decimalSum = Add[n1.decimal, n2.decimal] | {
+        let digitSum = Add[n1.digit, n2.digit] | {
+            -- how to return a Number sig instance here?? (there would be more logic before we
+            -- know what that Number sig would look like, but if we can't find a way to create and
+            -- return a new instance of a sig, I don't think we can do this in Forge)
+        }
+    }
+}
+
+--------------------------------------------------------------------
+
 fun distance[p1, p2: Point] : Number {
     let xSum = plus[p1.coordinate.x, p2.coordinate.x] | {
         let ySum = plus[p1.coordinate.y, p2.coordinate.y] | {

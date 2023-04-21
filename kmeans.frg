@@ -84,6 +84,6 @@ pred checkCenter[p: Point] {
 // new properties (property verification)
 // implementing our own arithmetic 
 // transition predicate (how do we separate point assignment and center reassignment while still enforcing the order)
--- either way works really (if we want to do them together, use the idea of next_state points)
+-- either way works really (if we want to do them together, use the idea of next_state points -- next_state points depends on current state centers; next_state centers depends on next_state points)
 
 // use partial instance (constraints) to constrain n for Iteration

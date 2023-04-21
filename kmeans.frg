@@ -24,7 +24,7 @@ sig Point {
     var center: lone Center
 }
 
-sig Iteration {
+one sig Iteration {
     n: one Int, -- total number of iterations to perform
     var i: one Int -- current iteration we are on
 }
@@ -84,3 +84,6 @@ pred checkCenter[p: Point] {
 // new properties (property verification)
 // implementing our own arithmetic 
 // transition predicate (how do we separate point assignment and center reassignment while still enforcing the order)
+-- either way works really (if we want to do them together, use the idea of next_state points)
+
+// use partial instance (constraints) to constrain n for Iteration

@@ -4,14 +4,9 @@ option problem_type temporal
 
 -- NOTE: need a bitwidth of 8
 
-sig Number {
-    digit: one Int,
-    decimal: one Int
-}
-
 sig Coordinate {
-    x: one Number,
-    y: one Number
+    x: one Int,
+    y: one Int
 }
 
 sig Center {
@@ -30,42 +25,37 @@ one sig Iteration {
 }
 -- NOTE: once i reaches n, enforce doNothing predicate! (doNothing iff i = n)
 
--- need to make sure that this is always true for purposes of squared distance remaining within integer bitwidth
-pred numberWellformed {
-    all n: Number | {
-        n.digit <= 2 and n.digit >= -2
-        (n.digit = 2 or n.digit = -2) implies n.decimal = 0
-        -- grid goes from (-2.0, -2.0) to (2.0, 2.0)
-        n.decimal >= 0 -- decimal should never be negative (to make a negative number, make the digit negative)
+-----------------------------------------------
+
+-- Returns the l1 (Manhattan) distance between 2 points
+fun distance[p1, p2: Point]: Int {
+    add[abs[p1.coordinate.x - p2.coordinate.x], abs[p1.coordinate.y - p2.coordinate.y]]
+}
+
+-----------------------------------------------
+
+
+pred coordinatesWellformed {
+    -- rationale: if we have a bitwidth of 8, we can go from -128 to 127. With a grid from -30 to
+    --            30 along both axes, the max manhattan distance we can have is 60 along x and 60
+    --            along y, making the total 120, which is right under the bitwidth constraint
+    all c: coordinate | {
+        c.x >= -30
+        c.x <= 30
+        c.y >= -30
+        c.y <= 30
     }
 }
 
-// IMPLEMENTING CUSTOM ARITHMETIC OPERATIONS DEFINED OVER Number sig
-fun plus[n1, n2: Number]: Number {
-    let decimalSum = Add[n1.decimal, n2.decimal] | {
-        let digitSum = Add[n1.digit, n2.digit] | {
-            -- how to return a Number sig instance here?? (there would be more logic before we
-            -- know what that Number sig would look like, but if we can't find a way to create and
-            -- return a new instance of a sig, I don't think we can do this in Forge)
-        }
-    }
-}
-
---------------------------------------------------------------------
-
-fun distance[p1, p2: Point] : Number {
-    let xSum = plus[p1.coordinate.x, p2.coordinate.x] | {
-        let ySum = plus[p1.coordinate.y, p2.coordinate.y] | {
-            plus[product[xSum, xSum], product[ySum, ySum]]
-            -- gives us the squared distance between two points
-        }
-    }
-}
 
 pred checkCenter[p: Point] {
-    -- no center that is not p.center that has a smaller distance to p
-    all c: {Center - p.center} | compare[distance[p1, c], distance[p1, p.center]]
+    -- no center should be closer to p than p.center
+    let pCenterDist = distance[p, p.center] | {
+        all c: {Center - p.center} | distance[p, c] > pCenterDist
+    }
 }
+
+-----------------------------------------------
 
 // Sigs that we might want:
 // - Coordinate --> represents a single coordinate (currently, in 2 dimensional space)

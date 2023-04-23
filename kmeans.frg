@@ -10,7 +10,7 @@ sig Coordinate {
 }
 
 sig Center {
-    var coordinate: one Coordinate
+    var coord: one Coordinate
 }
     
 sig Point {
@@ -28,8 +28,38 @@ one sig Iteration {
 -----------------------------------------------
 
 -- Returns the l1 (Manhattan) distance between 2 points
-fun distance[p1, p2: Point]: Int {
-    add[abs[p1.coordinate.x - p2.coordinate.x], abs[p1.coordinate.y - p2.coordinate.y]]
+fun distance[p: Point, c: Center]: Int {
+    add[abs[p.coordinate.x - c.coord.x], abs[p.coordinate.y - c.coord.y]]
+}
+
+fun meanX[c: Center]: Int {
+    -- get all the points with the center
+    let points = {p: Point | p.center = c} | {
+        let xVals = points.coordinate.x | {
+            let n = #points | {
+                remainder[sum[xVals], n] < 5 implies {
+                     -- rounding
+                    divide[sum[xVals], n] + 1
+                }
+                else {divide[sum[xVals], n]}
+            }
+        }
+    }
+}
+
+fun meanY[c: Center]: Int {
+    -- get all the points with the center
+    let points = {p: Point | p.center = c} | {
+        let yVals = points.coordinate.y | {
+            let n = #points | {
+                remainder[sum[yVals], n] < 5 implies {
+                     -- rounding
+                    add[divide[sum[yVals], n] , 1]
+                }
+                else {divide[sum[yVals], n]}
+            }
+        }
+    }
 }
 
 -----------------------------------------------
@@ -55,7 +85,51 @@ pred checkCenter[p: Point] {
     }
 }
 
+pred init {
+    no p: Point | some p.center -- no pointer should have a center
+    Iteration.i = 0 -- no iterations completed yet
+}
+
+pred assignCenters {
+    -- center should be the one whose distance is the least
+    all p: Point | some p.center'
+    all p: Point | next_state checkCenter[p]
+}
+
+pred calculateCenters {
+    -- next state center should be the mean of all the ones that have it in this state
+    all c: Center | {
+        next_state {c.coord.x = meanX[c]}
+        next_state {c.coord.y = meanY[c]}
+    }
+}
+
+pred doNothing {
+    Point.center = Point.center'
+    Center.coordinate = Center.coordinate'
+    Iteration.i = Iteration.i'
+}
+
+pred transitions {
+    init
+    always {coordinatesWellformed}
+    always {
+        (i < n) implies {
+            Iteration.i' = add[Iteration.i, 1]
+            assignCenters
+            calculateCenters
+        } else {
+            -- doNothing predicate here
+        }
+    }
+}
+
 -----------------------------------------------
+
+run {
+    Iteration.n = 5
+    transitions
+} for exactly 20 Point, exactly 2 Center
 
 // Sigs that we might want:
 // - Coordinate --> represents a single coordinate (currently, in 2 dimensional space)

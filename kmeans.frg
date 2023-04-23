@@ -4,7 +4,7 @@ option problem_type temporal
 
 -- NOTE: need a bitwidth of 8
 
-sig Coordinate {
+var sig Coordinate {
     x: one Int,
     y: one Int
 }
@@ -69,11 +69,11 @@ pred coordinatesWellformed {
     -- rationale: if we have a bitwidth of 8, we can go from -128 to 127. With a grid from -30 to
     --            30 along both axes, the max manhattan distance we can have is 60 along x and 60
     --            along y, making the total 120, which is right under the bitwidth constraint
-    all c: coordinate | {
-        c.x >= -30
-        c.x <= 30
-        c.y >= -30
-        c.y <= 30
+    all c: Coordinate | {
+        c.x >= -10
+        c.x <= 10
+        c.y >= -10
+        c.y <= 10
     }
 }
 
@@ -88,6 +88,9 @@ pred checkCenter[p: Point] {
 pred init {
     no p: Point | some p.center -- no pointer should have a center
     Iteration.i = 0 -- no iterations completed yet
+    all disj p1, p2: Point | {
+        (p1.coordinate.x != p2.coordinate.x) or (p1.coordinate.y != p2.coordinate.y)
+    } --ensure that we do not get repeated data
 }
 
 pred assignCenters {
@@ -106,7 +109,7 @@ pred calculateCenters {
 
 pred doNothing {
     Point.center = Point.center'
-    Center.coordinate = Center.coordinate'
+    Center.coord = Center.coord'
     Iteration.i = Iteration.i'
 }
 
@@ -114,12 +117,13 @@ pred transitions {
     init
     always {coordinatesWellformed}
     always {
-        (i < n) implies {
+        (Iteration.i < Iteration.n) implies {
             Iteration.i' = add[Iteration.i, 1]
             assignCenters
             calculateCenters
         } else {
             -- doNothing predicate here
+            doNothing
         }
     }
 }
@@ -127,9 +131,9 @@ pred transitions {
 -----------------------------------------------
 
 run {
-    Iteration.n = 5
+    Iteration.n = 3
     transitions
-} for exactly 20 Point, exactly 2 Center
+} for 8 Int, 10 Coordinate, exactly 5 Point, exactly 2 Center
 
 // Sigs that we might want:
 // - Coordinate --> represents a single coordinate (currently, in 2 dimensional space)
@@ -165,3 +169,7 @@ run {
 -- either way works really (if we want to do them together, use the idea of next_state points -- next_state points depends on current state centers; next_state centers depends on next_state points)
 
 // use partial instance (constraints) to constrain n for Iteration
+
+-- 1) the instances generate pretty slowly when we try any non trivial size of points/centers
+-- 2) the way we calculate the mean x/y coordinate probably overflows when we sum the individual coordinates
+-- 3) looking like this is leading up to utilizing z3... 'temporal' z3? (first idea is to use a dictionary from iteration to values)

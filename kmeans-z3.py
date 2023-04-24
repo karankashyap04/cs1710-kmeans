@@ -48,3 +48,10 @@ class KMeans(object):
             self.s.add(And(self.centers_y[i] >= -self.grid_limit, self.centers_y[i] <= self.grid_limit))
     
 
+    ##### HELPER FUNCTIONS #####
+    def distance(self, point_num: int, center_num: int):
+        # returns the l1 (Manhattan) distance between a point and a center
+        px, py = self.points_x[point_num], self.points_y[point_num]
+        cx, cy = self.centers_x[center_num], self.centers_y[center_num]
+
+        return Abs(px - cx) + Abs(py - cy)

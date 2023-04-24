@@ -65,6 +65,7 @@ class KMeans(object):
 
         ## Enforcing constraints that should always be true:
         self.points_within_grid()
+        self.no_duplicate_points()
         self.centers_within_grid()
         self.points_have_closest_center()
         self.centers_correctly_updated()
@@ -76,6 +77,13 @@ class KMeans(object):
         for i in range(self.num_points):
             self.s.add(And(self.points_x[i] >= -self.grid_limit, self.points_x[i] <= self.grid_limit))
             self.s.add(And(self.points_y[i] >= -self.grid_limit, self.points_y[i] <= self.grid_limit))
+    
+    def no_duplicate_points(self):
+        for i in range(self.num_points):
+            for j in range(i+1, self.num_points, 1):
+                px1, py1 = self.points_x[i], self.points_y[i]
+                px2, py2 = self.points_x[j], self.points_y[j]
+                self.s.add(Or(px1 != px2, py1 != py2))
     
     def centers_within_grid(self): # Ensures that all centers are within the defined grid
         for iter_num in range(self.num_iters):

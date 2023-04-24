@@ -31,6 +31,16 @@ class KMeans(object):
         self.centers_x = {i: Ints(f"cx_{i}") for i in range(self.num_centers)}
         self.centers_y = {i: Ints(f"cy_{i}") for i in range(self.num_centers)}
 
+        # center for some point
+        self.point_centers = {i: Ints(f"center_{i}") for i in range(num_points)}
+        # Each point is mapped to an int which we will constrain such that it is equal to the key
+        # corresponding to the center that is closest to the point
+
+        # This dictionary will help us reverse index so we can go from the z3 variable to the int
+        # which will allow us to key into the centers_x and centers_y hashmaps (or just provide
+        # the center number for the distance function)
+        self.center_var_to_center = {self.points_centers[i]: i for i in range(num_points)}
+
 
         ## Enforcing constraints that should always be true:
         self.points_within_grid()

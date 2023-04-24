@@ -26,9 +26,9 @@ class KMeans(object):
         # self.grid = {(i, j): Ints(f"var_{i}_{j}") for i in range(-grid_limit, grid_limit+1) for j in range(-grid_limit, grid_limit + 1)}
 
         def create_x_points(iter_num: int):
-            return {i: Ints(f"px_{i}_{iter_num}") for i in range(self.num_points)}
+            return {i: Int(f"px_{i}_{iter_num}") for i in range(self.num_points)}
         def create_y_points(iter_num: int):
-            return {i: Ints(f"py_{i}_{iter_num}") for i in range(self.num_points)}
+            return {i: Int(f"py_{i}_{iter_num}") for i in range(self.num_points)}
 
         # self.points_x = {i: Ints(f"px_{i}") for i in range(self.num_points)}
         # self.points_y = {i: Ints(f"py_{i}") for i in range(self.num_points)}
@@ -36,9 +36,9 @@ class KMeans(object):
         self.points_y = {iter_num: create_y_points(iter_num) for iter_num in range(self.num_iters)}
 
         def create_x_centers(iter_num: int):
-            return {i: Ints(f"cs_{i}_{iter_num}") for i in range(self.num_centers)}
+            return {i: Int(f"cs_{i}_{iter_num}") for i in range(self.num_centers)}
         def create_y_centers(iter_num: int):
-            return {i: Ints(f"cy_{i}_{iter_num}") for i in range(self.num_centers)}
+            return {i: Int(f"cy_{i}_{iter_num}") for i in range(self.num_centers)}
 
         # self.centers_x = {i: Ints(f"cx_{i}") for i in range(self.num_centers)}
         # self.centers_y = {i: Ints(f"cy_{i}") for i in range(self.num_centers)}
@@ -47,7 +47,7 @@ class KMeans(object):
 
         # center for some point
         def create_point_centers(iter_num: int):
-            return {i: Ints(f"center_{i}_{iter_num}") for i in range(num_points)}
+            return {i: Int(f"center_{i}_{iter_num}") for i in range(num_points)}
         
         # self.point_centers = {i: Ints(f"center_{i}") for i in range(num_points)}
         self.point_centers = {iter_num: create_point_centers(iter_num) for iter_num in range(self.num_iters)}
@@ -60,12 +60,14 @@ class KMeans(object):
         def create_center_to_var_to_center_nums(iter_num: int):
             return {self.points_center[iter_num][i]: i for i in range(num_points)}
         # self.center_var_to_center_num = {self.points_centers[i]: i for i in range(num_points)}
-        self.center_var_to_num = {iter_num: create_center_to_var_to_center_nums(iter_num) for iter_num in range(self.num_iters)}
+        self.center_var_to_center_num = {iter_num: create_center_to_var_to_center_nums(iter_num) for iter_num in range(self.num_iters)}
 
 
         ## Enforcing constraints that should always be true:
         self.points_within_grid()
         self.centers_within_grid()
+        self.points_have_closest_center()
+        self.centers_correctly_updated()
 
 
     ##### FUNCTIONS ENFORCING CONSTRAINTS ON SOLVER VARIABLES #####
@@ -83,13 +85,24 @@ class KMeans(object):
                 self.s.add(And(self.centers_y[iter_num][i] >= -self.grid_limit, self.centers_y[iter_num][i] <= self.grid_limit))
     
     def points_have_closest_center(self):
-        self.s.push()
+        # self.s.push()
         for iter_num in range(self.num_iters):
             for point_num in range(self.num_points):
                 expected_center_num = self.get_min_dist_center(point_num, iter_num)
                 center_var = self.point_centers[iter_num][point_num]
                 self.s.add(self.center_var_to_center_num[iter_num][center_var] == expected_center_num)
-        self.s.pop()
+        # self.s.pop()
+    
+    def centers_correctly_updated(self):
+        for iter_num in range(self.num_iters - 1):
+            prev_iter = iter_num
+            next_iter = iter_num + 1
+
+            for center_num in range(self.num_centers):
+                prev_x_points, prev_y_points = self.get_center_points(center_num, prev_iter)
+                cx_next, cy_next = self.centers_x[next_iter][center_num], self.centers_y[next_iter][center_num]
+                self.s.add(cx_next * len(prev_x_points) == Sum(prev_x_points))
+                self.s.add(cy_next * len(prev_y_points) == Sum(prev_y_points))
     
 
     ##### HELPER FUNCTIONS #####
@@ -113,3 +126,13 @@ class KMeans(object):
                 min_dist = dist
         
         return min_dist_center_num
+    
+    def get_center_points(self, center_num: int, iter_num: int):
+        center_points_x = [] # x coordinates of points with this center
+        center_points_y = [] # y coordinates of points with this center
+        for point_num in range(self.num_points):
+            pt_center_num = self.point_centers[iter_num][point_num]
+            if pt_center_num == center_num:
+                center_points_x.append(self.points_x[iter_num][point_num])
+                center_points_y.append(self.points_y[iter_num][point_num])
+        return center_points_x, center_points_y

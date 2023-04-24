@@ -39,13 +39,15 @@ class KMeans(object):
         # This dictionary will help us reverse index so we can go from the z3 variable to the int
         # which will allow us to key into the centers_x and centers_y hashmaps (or just provide
         # the center number for the distance function)
-        self.center_var_to_center = {self.points_centers[i]: i for i in range(num_points)}
+        self.center_var_to_center_num = {self.points_centers[i]: i for i in range(num_points)}
 
 
         ## Enforcing constraints that should always be true:
         self.points_within_grid()
         self.centers_within_grid()
 
+
+    ##### FUNCTIONS ENFORCING CONSTRAINTS ON SOLVER VARIABLES #####
     
     def points_within_grid(self): # Ensures that all points are within the defined grid
         for i in range(self.num_points):
@@ -57,11 +59,33 @@ class KMeans(object):
             self.s.add(And(self.centers_x[i] >= -self.grid_limit, self.centers_x[i] <= self.grid_limit))
             self.s.add(And(self.centers_y[i] >= -self.grid_limit, self.centers_y[i] <= self.grid_limit))
     
+    def points_have_closest_center(self):
+        self.s.push()
+        for point_num in range(self.num_points):
+            expected_center_num = self.get_min_dist_center(point_num)
+            center_var = self.point_centers[point_num]
+            self.s.add(self.center_var_to_center_num[center_var] == expected_center_num)
+        self.s.pop()
+    
 
     ##### HELPER FUNCTIONS #####
+
     def distance(self, point_num: int, center_num: int):
         # returns the l1 (Manhattan) distance between a point and a center
         px, py = self.points_x[point_num], self.points_y[point_num]
         cx, cy = self.centers_x[center_num], self.centers_y[center_num]
 
         return Abs(px - cx) + Abs(py - cy)
+
+    def get_min_dist_center(self, point_num: int):
+        # returns the number of the center that is closest to the point with the provided point_num
+        min_dist_center_num = None
+        min_dist = None
+
+        for center_num in range(self.num_centers):
+            dist = self.distance(point_num, center_num)
+            if (min_dist is None) or dist < min_dist:
+                min_dist_center_num = center_num
+                min_dist = dist
+        
+        return min_dist_center_num

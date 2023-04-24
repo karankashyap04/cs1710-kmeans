@@ -25,15 +25,15 @@ class KMeans(object):
         # Grid variables
         # self.grid = {(i, j): Ints(f"var_{i}_{j}") for i in range(-grid_limit, grid_limit+1) for j in range(-grid_limit, grid_limit + 1)}
 
-        def create_x_points(iter_num: int):
-            return {i: Int(f"px_{i}_{iter_num}") for i in range(self.num_points)}
-        def create_y_points(iter_num: int):
-            return {i: Int(f"py_{i}_{iter_num}") for i in range(self.num_points)}
+        # def create_x_points(iter_num: int):
+        #     return {i: Int(f"px_{i}_{iter_num}") for i in range(self.num_points)}
+        # def create_y_points(iter_num: int):
+        #     return {i: Int(f"py_{i}_{iter_num}") for i in range(self.num_points)}
 
-        # self.points_x = {i: Ints(f"px_{i}") for i in range(self.num_points)}
-        # self.points_y = {i: Ints(f"py_{i}") for i in range(self.num_points)}
-        self.points_x = {iter_num: create_x_points(iter_num) for iter_num in range(self.num_iters)}
-        self.points_y = {iter_num: create_y_points(iter_num) for iter_num in range(self.num_iters)}
+        self.points_x = {i: Int(f"px_{i}") for i in range(self.num_points)}
+        self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
+        # self.points_x = {iter_num: create_x_points(iter_num) for iter_num in range(self.num_iters)}
+        # self.points_y = {iter_num: create_y_points(iter_num) for iter_num in range(self.num_iters)}
 
         def create_x_centers(iter_num: int):
             return {i: Int(f"cs_{i}_{iter_num}") for i in range(self.num_centers)}
@@ -73,10 +73,9 @@ class KMeans(object):
     ##### FUNCTIONS ENFORCING CONSTRAINTS ON SOLVER VARIABLES #####
     
     def points_within_grid(self): # Ensures that all points are within the defined grid
-        for iter_num in range(self.num_iters):
-            for i in range(self.num_points):
-                self.s.add(And(self.points_x[iter_num][i] >= -self.grid_limit, self.points_x[iter_num][i] <= self.grid_limit))
-                self.s.add(And(self.points_y[iter_num][i] >= -self.grid_limit, self.points_y[iter_num][i] <= self.grid_limit))
+        for i in range(self.num_points):
+            self.s.add(And(self.points_x[i] >= -self.grid_limit, self.points_x[i] <= self.grid_limit))
+            self.s.add(And(self.points_y[i] >= -self.grid_limit, self.points_y[i] <= self.grid_limit))
     
     def centers_within_grid(self): # Ensures that all centers are within the defined grid
         for iter_num in range(self.num_iters):
@@ -109,7 +108,7 @@ class KMeans(object):
 
     def distance(self, point_num: int, center_num: int, iter_num: int):
         # returns the l1 (Manhattan) distance between a point and a center
-        px, py = self.points_x[iter_num][point_num], self.points_y[iter_num][point_num]
+        px, py = self.points_x[point_num], self.points_y[point_num]
         cx, cy = self.centers_x[iter_num][center_num], self.centers_y[iter_num][center_num]
 
         return Abs(px - cx) + Abs(py - cy)
@@ -133,6 +132,6 @@ class KMeans(object):
         for point_num in range(self.num_points):
             pt_center_num = self.point_centers[iter_num][point_num]
             if pt_center_num == center_num:
-                center_points_x.append(self.points_x[iter_num][point_num])
-                center_points_y.append(self.points_y[iter_num][point_num])
+                center_points_x.append(self.points_x[point_num])
+                center_points_y.append(self.points_y[point_num])
         return center_points_x, center_points_y

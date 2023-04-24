@@ -30,3 +30,21 @@ class KMeans(object):
 
         self.centers_x = {i: Ints(f"cx_{i}") for i in range(self.num_centers)}
         self.centers_y = {i: Ints(f"cy_{i}") for i in range(self.num_centers)}
+
+
+        ## Enforcing constraints that should always be true:
+        self.points_within_grid()
+        self.centers_within_grid()
+
+    
+    def points_within_grid(self): # Ensures that all points are within the defined grid
+        for i in range(self.num_points):
+            self.s.add(And(self.points_x[i] >= -self.grid_limit, self.points_x[i] <= self.grid_limit))
+            self.s.add(And(self.points_y[i] >= -self.grid_limit, self.points_y[i] <= self.grid_limit))
+    
+    def centers_within_grid(self): # Ensures that all centers are within the defined grid
+        for i in range(self.num_centers):
+            self.s.add(And(self.centers_x[i] >= -self.grid_limit, self.centers_x[i] <= self.grid_limit))
+            self.s.add(And(self.centers_y[i] >= -self.grid_limit, self.centers_y[i] <= self.grid_limit))
+    
+

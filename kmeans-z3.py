@@ -19,12 +19,6 @@ class KMeans(object):
         # Solver
         self.s = Solver()
 
-        # Grid of defined coordinates
-        # self.defined_coordinates = [(i, j) for j in range(-grid_limit, grid_limit + 1) for i in range(-grid_limit, grid_limit + 1)]
-
-        # Grid variables
-        # self.grid = {(i, j): Ints(f"var_{i}_{j}") for i in range(-grid_limit, grid_limit+1) for j in range(-grid_limit, grid_limit + 1)}
-
         self.points_x = {i: Int(f"px_{i}") for i in range(self.num_points)}
         self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
 

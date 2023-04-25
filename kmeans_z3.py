@@ -98,6 +98,14 @@ class KMeans(object):
                 self.s.add(cx_next * len(prev_x_points) == Sum(prev_x_points))
                 self.s.add(cy_next * len(prev_y_points) == Sum(prev_y_points))
     
+    def run(self):
+        result = self.s.check()
+        if result == sat:
+            print("SATISFIABLE")
+            # TODO: Need to create a visualization and call that here
+        else:
+            print("UNSATISFIABLE")
+    
 
     ##### HELPER FUNCTIONS #####
 
@@ -130,3 +138,8 @@ class KMeans(object):
                 center_points_x.append(self.points_x[point_num])
                 center_points_y.append(self.points_y[point_num])
         return center_points_x, center_points_y
+
+
+def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):
+    kmeans = KMeans(num_iters, num_points, num_centers, grid_limit)
+    kmeans.run()

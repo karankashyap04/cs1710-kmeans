@@ -45,7 +45,7 @@ class KMeans(object):
         # which will allow us to key into the centers_x and centers_y hashmaps (or just provide
         # the center number for the distance function)
         def create_center_to_var_to_center_nums(iter_num: int):
-            return {self.points_center[iter_num][i]: i for i in range(num_points)}
+            return {self.point_centers[iter_num][i]: i for i in range(num_points)}
         # self.center_var_to_center_num = {self.points_centers[i]: i for i in range(num_points)}
         self.center_var_to_center_num = {iter_num: create_center_to_var_to_center_nums(iter_num) for iter_num in range(self.num_iters)}
 
@@ -123,9 +123,15 @@ class KMeans(object):
 
         for center_num in range(self.num_centers):
             dist = self.distance(point_num, center_num, iter_num)
-            if (min_dist is None) or dist < min_dist:
+            # if (min_dist is None) or dist < min_dist:
+            #     min_dist_center_num = center_num
+            #     min_dist = dist
+            if min_dist is None:
                 min_dist_center_num = center_num
                 min_dist = dist
+            else:
+                min_dist_center_num = If(dist < min_dist, center_num, min_dist_center_num)
+                min_dist = If(dist < min_dist, dist, min_dist)
         
         return min_dist_center_num
     

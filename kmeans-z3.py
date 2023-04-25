@@ -23,7 +23,7 @@ class KMeans(object):
         self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
 
         def create_x_centers(iter_num: int):
-            return {i: Int(f"cs_{i}_{iter_num}") for i in range(self.num_centers)}
+            return {i: Int(f"cx_{i}_{iter_num}") for i in range(self.num_centers)}
         def create_y_centers(iter_num: int):
             return {i: Int(f"cy_{i}_{iter_num}") for i in range(self.num_centers)}
 

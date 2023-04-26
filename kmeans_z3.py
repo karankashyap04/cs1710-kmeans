@@ -23,9 +23,17 @@ class KMeans(object):
         self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
 
         def create_x_centers(iter_num: int):
-            return {i: Int(f"cx_{i}_{iter_num}") for i in range(self.num_centers)}
+            # return {i: Int(f"cx_{i}_{iter_num}") for i in range(self.num_centers)}
+            cx = Array(f"cx_{iter_num}", IntSort(), IntSort())
+            for center_num in range(self.num_centers):
+                cx = Store(cx, center_num, Int(f"cs_{center_num}_{iter_num}"))
+            return cx
         def create_y_centers(iter_num: int):
-            return {i: Int(f"cy_{i}_{iter_num}") for i in range(self.num_centers)}
+            # return {i: Int(f"cy_{i}_{iter_num}") for i in range(self.num_centers)}
+            cy = Array(f"cy_{iter_num}", IntSort(), IntSort())
+            for center_num in range(self.num_centers):
+                cy = Store(cy, center_num, Int(f"cy_{center_num}_{iter_num}"))
+            return cy
 
         # self.centers_x = {i: Ints(f"cx_{i}") for i in range(self.num_centers)}
         # self.centers_y = {i: Ints(f"cy_{i}") for i in range(self.num_centers)}
@@ -44,16 +52,17 @@ class KMeans(object):
         # This dictionary will help us reverse index so we can go from the z3 variable to the int
         # which will allow us to key into the centers_x and centers_y hashmaps (or just provide
         # the center number for the distance function)
-        def create_center_to_var_to_center_nums(iter_num: int):
+        def create_center_var_to_center_nums(iter_num: int):
             return {self.point_centers[iter_num][i]: i for i in range(num_points)}
         # self.center_var_to_center_num = {self.points_centers[i]: i for i in range(num_points)}
-        self.center_var_to_center_num = {iter_num: create_center_to_var_to_center_nums(iter_num) for iter_num in range(self.num_iters)}
+        self.center_var_to_center_num = {iter_num: create_center_var_to_center_nums(iter_num) for iter_num in range(self.num_iters)}
 
 
         ## Enforcing constraints that should always be true:
         self.points_within_grid()
         self.no_duplicate_points()
         self.centers_within_grid()
+        self.point_centers_are_valid_center_numbers()
         self.points_have_closest_center()
         self.centers_correctly_updated()
 
@@ -61,11 +70,13 @@ class KMeans(object):
     ##### FUNCTIONS ENFORCING CONSTRAINTS ON SOLVER VARIABLES #####
     
     def points_within_grid(self): # Ensures that all points are within the defined grid
+        print("points within grid")
         for i in range(self.num_points):
             self.s.add(And(self.points_x[i] >= -self.grid_limit, self.points_x[i] <= self.grid_limit))
             self.s.add(And(self.points_y[i] >= -self.grid_limit, self.points_y[i] <= self.grid_limit))
     
     def no_duplicate_points(self):
+        print("no duplicate points")
         for i in range(self.num_points):
             for j in range(i+1, self.num_points, 1):
                 px1, py1 = self.points_x[i], self.points_y[i]
@@ -73,28 +84,55 @@ class KMeans(object):
                 self.s.add(Or(px1 != px2, py1 != py2))
     
     def centers_within_grid(self): # Ensures that all centers are within the defined grid
+        print("centers within grid")
         for iter_num in range(self.num_iters):
             for i in range(self.num_centers):
-                self.s.add(And(self.centers_x[iter_num][i] >= -self.grid_limit, self.centers_x[iter_num][i] <= self.grid_limit))
-                self.s.add(And(self.centers_y[iter_num][i] >= -self.grid_limit, self.centers_y[iter_num][i] <= self.grid_limit))
+                # self.s.add(And(self.centers_x[iter_num][i] >= -self.grid_limit, self.centers_x[iter_num][i] <= self.grid_limit))
+                self.s.add(And(Select(self.centers_x[iter_num], i) >= -self.grid_limit, Select(self.centers_x[iter_num], i) <= self.grid_limit))
+                # self.s.add(And(self.centers_y[iter_num][i] >= -self.grid_limit, self.centers_y[iter_num][i] <= self.grid_limit))
+                self.s.add(And(Select(self.centers_y[iter_num], i) >= -self.grid_limit, Select(self.centers_y[iter_num], i) <= self.grid_limit))
+    
+    def point_centers_are_valid_center_numbers(self):
+        print("point centers are valid center numbers")
+        for iter_num in range(self.num_iters):
+            for i in range(self.num_points):
+                center_var = self.point_centers[iter_num][i]
+                self.s.add(And(center_var >= 0, center_var < self.num_centers))
+    
+    # def points_have_closest_center(self):
+    #     # self.s.push()
+    #     for iter_num in range(self.num_iters):
+    #         for point_num in range(self.num_points):
+    #             # expected_center_num = self.get_min_dist_center(point_num, iter_num)
+    #             # center_var = self.point_centers[iter_num][point_num]
+    #             # self.s.add(self.center_var_to_center_num[iter_num][center_var] == expected_center_num)
+    #             distances = []
+    #             for center_num in range(self.num_centers):
+    #                 distances.append(self.distance(point_num, center_num, iter_num))
+    #             point_center_var = self.point_centers[iter_num][point_num] # z3 variable
+
+    #     # self.s.pop()
     
     def points_have_closest_center(self):
-        # self.s.push()
+        print("points have closest center")
         for iter_num in range(self.num_iters):
             for point_num in range(self.num_points):
-                expected_center_num = self.get_min_dist_center(point_num, iter_num)
-                center_var = self.point_centers[iter_num][point_num]
-                self.s.add(self.center_var_to_center_num[iter_num][center_var] == expected_center_num)
-        # self.s.pop()
+                center_num_var = self.point_centers[iter_num][point_num]
+                assigned_center_dist = self.distance(point_num, center_num_var, iter_num)
+                for center_num in range(self.num_centers):
+                    dist = self.distance(point_num, center_num, iter_num)
+                    self.s.add(assigned_center_dist <= dist)
     
     def centers_correctly_updated(self):
+        print("centers correctly updated")
         for iter_num in range(self.num_iters - 1):
             prev_iter = iter_num
             next_iter = iter_num + 1
 
             for center_num in range(self.num_centers):
                 prev_x_points, prev_y_points = self.get_center_points(center_num, prev_iter)
-                cx_next, cy_next = self.centers_x[next_iter][center_num], self.centers_y[next_iter][center_num]
+                # cx_next, cy_next = self.centers_x[next_iter][center_num], self.centers_y[next_iter][center_num]
+                cx_next, cy_next = Select(self.centers_x[next_iter], center_num), Select(self.centers_y[next_iter], center_num)
                 self.s.add(cx_next * len(prev_x_points) == Sum(prev_x_points))
                 self.s.add(cy_next * len(prev_y_points) == Sum(prev_y_points))
     
@@ -109,33 +147,48 @@ class KMeans(object):
 
     ##### HELPER FUNCTIONS #####
 
-    def distance(self, point_num: int, center_num: int, iter_num: int):
+    def distance(self, point_num: int, center_num, iter_num: int):
         # returns the l1 (Manhattan) distance between a point and a center
         px, py = self.points_x[point_num], self.points_y[point_num]
-        cx, cy = self.centers_x[iter_num][center_num], self.centers_y[iter_num][center_num]
+        # cx, cy = self.centers_x[iter_num][center_num], self.centers_y[iter_num][center_num]
+        cx, cy = Select(self.centers_x[iter_num], center_num), Select(self.centers_y[iter_num], center_num)
 
         return Abs(px - cx) + Abs(py - cy)
 
     def get_min_dist_center(self, point_num: int, iter_num: int):
-        # returns the number of the center that is closest to the point with the provided point_num
-        min_dist_center_num = None
-        min_dist = None
-
+        distances = []
         for center_num in range(self.num_centers):
-            dist = self.distance(point_num, center_num, iter_num)
-            # if (min_dist is None) or dist < min_dist:
-            #     min_dist_center_num = center_num
-            #     min_dist = dist
-            if min_dist is None:
-                min_dist_center_num = center_num
-                min_dist = dist
-            else:
-                min_dist_center_num = If(dist < min_dist, center_num, min_dist_center_num)
-                min_dist = If(dist < min_dist, dist, min_dist)
+            distances.append(self.distance(point_num, center_num, iter_num))
+        min_dist_center_num = Int(f"center_{point_num}_{iter_num}")
+        self.s.add(min_dist_center_num < len(distances))
+        self.s.add(min_dist_center_num >= 0)
+        for center_num in range(self.num_centers):
+            self.s.add(distances[self.center_var_to_center_num[iter_num][min_dist_center_num]] <= distances[center_num])
+        return self.center_var_to_center_num[iter_num][min_dist_center_num]
+
+    # def get_min_dist_center(self, point_num: int, iter_num: int):
+    #     # returns the number of the center that is closest to the point with the provided point_num
+    #     min_dist_center_num = None
+    #     min_dist = None
+
+    #     for center_num in range(self.num_centers):
+    #         dist = self.distance(point_num, center_num, iter_num)
+    #         # if (min_dist is None) or dist < min_dist:
+    #         #     min_dist_center_num = center_num
+    #         #     min_dist = dist
+    #         if min_dist is None:
+    #             min_dist_center_num = center_num
+    #             min_dist = dist
+    #         else:
+    #             x = (dist < min_dist).is_true
+    #             min_dist_center_num = If(dist < min_dist, center_num, min_dist_center_num)
+    #             min_dist = If(dist < min_dist, dist, min_dist)
+    #     ## MAYBE THIS FUNCTION SHOULD BE REWRITTEN TO GET ALL THE CENTERS, AND ASSERT THAT THE
+    #     ## INT_VAL IT RETURNS IS THE ONE WITH THE SMALLEST VALUE
         
-        return min_dist_center_num
+    #     return min_dist_center_num
     
-    def get_center_points(self, center_num: int, iter_num: int):
+    def get_center_points(self, center_num, iter_num: int):
         center_points_x = [] # x coordinates of points with this center
         center_points_y = [] # y coordinates of points with this center
         for point_num in range(self.num_points):

@@ -1,4 +1,5 @@
 from z3 import *
+from visualizer import Visualizer
 
 class KMeans(object):
 
@@ -140,8 +141,9 @@ class KMeans(object):
         result = self.s.check()
         if result == sat:
             print("SATISFIABLE")
-            self.evaluate_model_vars()
+            px, py, cx, cy, pt_centers = self.evaluate_model_vars()
             # TODO: Need to create a visualization and call that here
+            visualizer = Visualizer(self.num_iters, self.num_points, self.num_centers, self.grid_limit, px, py, cx, cy, pt_centers)
         else:
             print("UNSATISFIABLE")
     
@@ -171,6 +173,7 @@ class KMeans(object):
                 iter_centers.append(self.s.model().evaluate(self.point_centers[iter_num][point_num]))
             pt_centers.append(iter_centers)
         print("pt_centers:", pt_centers)
+        return px, py, cx, cy, pt_centers
     
 
     ##### HELPER FUNCTIONS #####

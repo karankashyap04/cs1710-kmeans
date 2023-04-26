@@ -52,10 +52,10 @@ class KMeans(object):
         # This dictionary will help us reverse index so we can go from the z3 variable to the int
         # which will allow us to key into the centers_x and centers_y hashmaps (or just provide
         # the center number for the distance function)
-        def create_center_var_to_center_nums(iter_num: int):
-            return {self.point_centers[iter_num][i]: i for i in range(num_points)}
-        # self.center_var_to_center_num = {self.points_centers[i]: i for i in range(num_points)}
-        self.center_var_to_center_num = {iter_num: create_center_var_to_center_nums(iter_num) for iter_num in range(self.num_iters)}
+        # def create_center_var_to_center_nums(iter_num: int):
+        #     return {self.point_centers[iter_num][i]: i for i in range(num_points)}
+        # # self.center_var_to_center_num = {self.points_centers[i]: i for i in range(num_points)}
+        # self.center_var_to_center_num = {iter_num: create_center_var_to_center_nums(iter_num) for iter_num in range(self.num_iters)}
 
 
         ## Enforcing constraints that should always be true:
@@ -140,9 +140,37 @@ class KMeans(object):
         result = self.s.check()
         if result == sat:
             print("SATISFIABLE")
+            self.evaluate_model_vars()
             # TODO: Need to create a visualization and call that here
         else:
             print("UNSATISFIABLE")
+    
+    def evaluate_model_vars(self):
+        px, py = [], [] # x and y point coordinates (coordinate of i'th point at index i)
+        for point_num in range(self.num_points):
+            px.append(self.s.model().evaluate(self.points_x[point_num]))
+            py.append(self.s.model().evaluate(self.points_y[point_num]))
+        print("px:", px)
+        print("py:", py)
+
+        cx, cy = [], [] # i-th row: i-th iteration; j-th column: j-th center's coordinates
+        for iter_num in range(self.num_iters):
+            x_coords, y_coords = [], [] # coordinates for this iteration
+            for center_num in range(self.num_centers):
+                x_coords.append(self.s.model().evaluate(Select(self.centers_x[iter_num], center_num)))
+                y_coords.append(self.s.model().evaluate(Select(self.centers_y[iter_num], center_num)))
+            cx.append(x_coords)
+            cy.append(y_coords)
+        print("cx:", cx)
+        print("cy:", cy)
+
+        pt_centers = [] # i-th row: i-th iteration; j-th column: center_num for j-th point
+        for iter_num in range(self.num_iters):
+            iter_centers = []
+            for point_num in range(self.num_points):
+                iter_centers.append(self.s.model().evaluate(self.point_centers[iter_num][point_num]))
+            pt_centers.append(iter_centers)
+        print("pt_centers:", pt_centers)
     
 
     ##### HELPER FUNCTIONS #####
@@ -155,16 +183,16 @@ class KMeans(object):
 
         return Abs(px - cx) + Abs(py - cy)
 
-    def get_min_dist_center(self, point_num: int, iter_num: int):
-        distances = []
-        for center_num in range(self.num_centers):
-            distances.append(self.distance(point_num, center_num, iter_num))
-        min_dist_center_num = Int(f"center_{point_num}_{iter_num}")
-        self.s.add(min_dist_center_num < len(distances))
-        self.s.add(min_dist_center_num >= 0)
-        for center_num in range(self.num_centers):
-            self.s.add(distances[self.center_var_to_center_num[iter_num][min_dist_center_num]] <= distances[center_num])
-        return self.center_var_to_center_num[iter_num][min_dist_center_num]
+    # def get_min_dist_center(self, point_num: int, iter_num: int):
+    #     distances = []
+    #     for center_num in range(self.num_centers):
+    #         distances.append(self.distance(point_num, center_num, iter_num))
+    #     min_dist_center_num = Int(f"center_{point_num}_{iter_num}")
+    #     self.s.add(min_dist_center_num < len(distances))
+    #     self.s.add(min_dist_center_num >= 0)
+    #     for center_num in range(self.num_centers):
+    #         self.s.add(distances[self.center_var_to_center_num[iter_num][min_dist_center_num]] <= distances[center_num])
+    #     return self.center_var_to_center_num[iter_num][min_dist_center_num]
 
     # def get_min_dist_center(self, point_num: int, iter_num: int):
     #     # returns the number of the center that is closest to the point with the provided point_num

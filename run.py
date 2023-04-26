@@ -7,9 +7,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("SMT solver: Property Verifications of the k-Means Clustering Algorithm")
 
     parser.add_argument("-i", "--num_iters", default=5, help="Number of iterations for which to run the algorithm")
-    parser.add_argument("-p", "--num_points", default=100, help="Number of datapoints to generate")
-    parser.add_argument("-c", "--num_centers", default=5, help="Number of clusters (and therefore, the number of cluster centers)")
-    parser.add_argument("-g", "--grid_limit", default=25, help="board dimension (each axis goes from -grid_limit to grid_limit)")
+    parser.add_argument("-p", "--num_points", default=10, help="Number of datapoints to generate")
+    parser.add_argument("-c", "--num_centers", default=3, help="Number of clusters (and therefore, the number of cluster centers)")
+    parser.add_argument("-g", "--grid_limit", default=5, help="board dimension (each axis goes from -grid_limit to grid_limit)")
 
     # args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     args = parser.parse_args()

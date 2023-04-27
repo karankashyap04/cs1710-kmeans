@@ -144,6 +144,7 @@ class KMeans(object):
             px, py, cx, cy, pt_centers = self.evaluate_model_vars()
             # TODO: Need to create a visualization and call that here
             visualizer = Visualizer(self.num_iters, self.num_points, self.num_centers, self.grid_limit, px, py, cx, cy, pt_centers)
+            visualizer.visualize()
         else:
             print("UNSATISFIABLE")
     

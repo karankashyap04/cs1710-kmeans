@@ -1,5 +1,4 @@
 import argparse
-import sys
 
 from kmeans_z3 import main
 
@@ -11,7 +10,6 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--num_centers", default=3, type=int, help="Number of clusters (and therefore, the number of cluster centers)")
     parser.add_argument("-g", "--grid_limit", default=5, type=int, help="board dimension (each axis goes from -grid_limit to grid_limit)")
 
-    # args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     args = parser.parse_args()
     num_iters = args.num_iters
     num_points = args.num_points

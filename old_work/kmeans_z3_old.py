@@ -23,21 +23,19 @@ class KMeans(object):
         self.points_x = {i: Int(f"px_{i}") for i in range(self.num_points)}
         self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
 
-        def create_initial_x_centers(iter_num: int=0):
+        def create_x_centers(iter_num: int):
             cx = Array(f"cx_{iter_num}", IntSort(), IntSort())
             for center_num in range(self.num_centers):
                 cx = Store(cx, center_num, Int(f"cs_{center_num}_{iter_num}"))
             return cx
-        def create_initial_y_centers(iter_num: int=0):
+        def create_y_centers(iter_num: int):
             cy = Array(f"cy_{iter_num}", IntSort(), IntSort())
             for center_num in range(self.num_centers):
                 cy = Store(cy, center_num, Int(f"cy_{center_num}_{iter_num}"))
             return cy
 
-        # self.centers_x = {iter_num: create_x_centers() for iter_num in range(self.num_iters)}
-        self.centers_x = {0: create_initial_x_centers()} 
-        # self.centers_y = {iter_num: create_y_centers(iter_num) for iter_num in range(self.num_iters)}
-        self.centers_y = {0: create_initial_y_centers()}
+        self.centers_x = {iter_num: create_x_centers(iter_num) for iter_num in range(self.num_iters)}
+        self.centers_y = {iter_num: create_y_centers(iter_num) for iter_num in range(self.num_iters)}
 
         # center for some point
         def create_point_centers(iter_num: int):
@@ -46,14 +44,14 @@ class KMeans(object):
         # Each point is mapped to an int which we will constrain such that it is equal to the key
         # corresponding to the center that is closest to the point
 
+
         ## Enforcing constraints that should always be true:
-        # self.points_within_grid()
-        # self.no_duplicate_points()
-        # self.centers_within_grid()
-        # self.point_centers_are_valid_center_numbers()
-        # self.points_have_closest_center()
-        # self.centers_correctly_updated()
-        self.run_model()
+        self.points_within_grid()
+        self.no_duplicate_points()
+        self.centers_within_grid()
+        self.point_centers_are_valid_center_numbers()
+        self.points_have_closest_center()
+        self.centers_correctly_updated()
 
 
     ##### FUNCTIONS ENFORCING CONSTRAINTS ON SOLVER VARIABLES #####
@@ -72,29 +70,30 @@ class KMeans(object):
                 px2, py2 = self.points_x[j], self.points_y[j]
                 self.s.add(Or(px1 != px2, py1 != py2))
     
-    def centers_within_grid(self, iter_num: int): # Ensures that all centers are within the defined grid
+    def centers_within_grid(self): # Ensures that all centers are within the defined grid
         print("centers within grid")
-        # for iter_num in range(self.num_iters):
-        for i in range(self.num_centers):
-            self.s.add(And(Select(self.centers_x[iter_num], i) >= -self.grid_limit, Select(self.centers_x[iter_num], i) <= self.grid_limit))
-            self.s.add(And(Select(self.centers_y[iter_num], i) >= -self.grid_limit, Select(self.centers_y[iter_num], i) <= self.grid_limit))
+        for iter_num in range(self.num_iters):
+            for i in range(self.num_centers):
+                self.s.add(And(Select(self.centers_x[iter_num], i) >= -self.grid_limit, Select(self.centers_x[iter_num], i) <= self.grid_limit))
+                self.s.add(And(Select(self.centers_y[iter_num], i) >= -self.grid_limit, Select(self.centers_y[iter_num], i) <= self.grid_limit))
     
-    def point_centers_are_valid_center_numbers(self, iter_num: int):
+    def point_centers_are_valid_center_numbers(self):
         print("point centers are valid center numbers")
-        # for iter_num in range(self.num_iters):
-        for i in range(self.num_points):
-            center_var = self.point_centers[iter_num][i]
-            self.s.add(And(center_var >= 0, center_var < self.num_centers))
+        for iter_num in range(self.num_iters):
+            for i in range(self.num_points):
+                center_var = self.point_centers[iter_num][i]
+                self.s.add(And(center_var >= 0, center_var < self.num_centers))
     
-    def points_have_closest_center(self, iter_num: int):
+    def points_have_closest_center(self):
         print("points have closest center")
-        # for iter_num in range(self.num_iters):
-        for point_num in range(self.num_points):
-            center_num_var = self.point_centers[iter_num][point_num]
-            assigned_center_dist = self.distance(point_num, center_num_var, iter_num)
-            for center_num in range(self.num_centers):
-                dist = self.distance(point_num, center_num, iter_num)
-                self.s.add(assigned_center_dist <= dist)
+        for iter_num in range(self.num_iters):
+            for point_num in range(self.num_points):
+                center_num_var = self.point_centers[iter_num][point_num]
+                assigned_center_dist = self.distance(point_num, center_num_var, iter_num)
+                for center_num in range(self.num_centers):
+                    dist = self.distance(point_num, center_num, iter_num)
+                    self.s.add(assigned_center_dist <= dist)
+                    # Add something here to create a mapping from center_vars to center_nums???
     
     def centers_correctly_updated(self):
         print("centers correctly updated")
@@ -112,71 +111,6 @@ class KMeans(object):
                     cx_prev, cy_prev = Select(self.centers_x[prev_iter], center_num), Select(self.centers_y[prev_iter], center_num)
                     self.s.add(cx_prev == cx_next)
                     self.s.add(cy_prev == cy_next)
-
-    def run_model(self):
-        ## Independent of iterations:
-        self.points_within_grid() # All points are within the grid
-        self.no_duplicate_points() # No points are duplicates
-
-        ## Iteration specific properties:
-        for iter_num in range(self.num_iters):
-            print("iter_num", iter_num)
-            self.centers_within_grid(iter_num) # All centers are within the grid
-            self.point_centers_are_valid_center_numbers(iter_num)
-            self.points_have_closest_center(iter_num)
-            temp_result = self.s.check()
-            if temp_result == sat:
-                ### Assigning the centers for the next iteration ###
-                # 1. extract point centers for this iteration
-                pt_centers = {center_num: [] for center_num in range(self.num_centers)}
-                for point_num in range(self.num_points):
-                    print("point_num", point_num)
-                    center_num = self.s.model().evaluate(self.point_centers[iter_num][point_num])
-                    print("center_num1", center_num)
-                    center_num = int(center_num.as_string())
-                    print("center_num2", center_num)
-                    assert (center_num in pt_centers) # shouldn't be an invalid center_num
-                    pt_centers[center_num].append(point_num)
-                print("pt_centers for iter_num", iter_num, " are", pt_centers)
-                
-                # 2. extracting point x and y coordinates
-                if iter_num == 0:
-                    px, py = [], []
-                    for point_num in range(self.num_points):
-                        x = self.s.model().evaluate(self.points_x[point_num])
-                        px.append(int(x.as_string()))
-                        y = self.s.model().evaluate(self.points_y[point_num])
-                        py.append(int(y.as_string()))
-                    self.points_x = {point_num: px[point_num] for point_num in range(self.num_points)}
-                    self.points_y = {point_num: py[point_num] for point_num in range(self.num_points)}
-                else:
-                    px, py = list(self.points_x.values()), list(self.points_y.values())
-                
-                # 3. compute new center values
-                cx, cy = [], []
-                for center_num in range(self.num_centers):
-                    n = len(pt_centers[center_num])
-                    if n == 0: # keep the center in the same position
-                        x = self.s.model().evaluate(Select(self.centers_x[iter_num], center_num))
-                        cx.append(int(x.as_string()))
-                        y = self.s.model().evaluate(Select(self.centers_y[iter_num], center_num))
-                        cy.append(int(y.as_string()))
-                    else: # new center values based on point averages
-                        x_coords = [px[pt_num] for pt_num in pt_centers[center_num]]
-                        y_coords = [py[pt_num] for pt_num in pt_centers[center_num]]
-                        cx.append(sum(x_coords) // n)
-                        cy.append(sum(y_coords) // n)
-                
-                # 4. update the values of self.centers_x and self.centers_y
-                center_x = Array(f"cx_{iter_num+1}", IntSort(), IntSort())
-                center_y = Array(f"cy_{iter_num+1}", IntSort(), IntSort())
-                for center_num in range(self.num_centers):
-                    center_x = Store(center_x, center_num, cx[center_num])
-                    center_y = Store(center_y, center_num, cy[center_num])
-                self.centers_x[iter_num+1] = center_x
-                self.centers_y[iter_num+1] = center_y
-            else:
-                raise Exception("Impossible instance: UNSAT at an intermediate step!")
     
     def run(self):
         result = self.s.check()
@@ -190,11 +124,10 @@ class KMeans(object):
             print("UNSATISFIABLE")
     
     def evaluate_model_vars(self):
-        # px, py = [], [] # x and y point coordinates (coordinate of i'th point at index i)
-        # for point_num in range(self.num_points):
-        #     px.append(self.s.model().evaluate(self.points_x[point_num]))
-        #     py.append(self.s.model().evaluate(self.points_y[point_num]))
-        px, py = list(self.points_x.values()), list(self.points_y.values())
+        px, py = [], [] # x and y point coordinates (coordinate of i'th point at index i)
+        for point_num in range(self.num_points):
+            px.append(self.s.model().evaluate(self.points_x[point_num]))
+            py.append(self.s.model().evaluate(self.points_y[point_num]))
         print("px:", px)
         print("py:", py)
 

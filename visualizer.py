@@ -22,8 +22,10 @@ class Visualizer:
             pt_center_num = int(pt_center_num.as_string())
             assert pt_center_num in points_x_by_center
             assert pt_center_num in points_y_by_center
-            points_x_by_center[pt_center_num].append(int(self.px[point_num].as_string()))
-            points_y_by_center[pt_center_num].append(int(self.py[point_num].as_string()))
+            # points_x_by_center[pt_center_num].append(int(self.px[point_num].as_string()))
+            # points_y_by_center[pt_center_num].append(int(self.py[point_num].as_string()))
+            points_x_by_center[pt_center_num].append(self.px[point_num])
+            points_y_by_center[pt_center_num].append(self.py[point_num])
         return points_x_by_center, points_y_by_center
     
     def visualize(self):

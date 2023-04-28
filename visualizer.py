@@ -29,20 +29,22 @@ class Visualizer:
         return points_x_by_center, points_y_by_center
     
     def visualize(self):
-        # figure, axis = plt.subplots(self.num_iters, 1)
         for iter_num in range(self.num_iters):
             # set limits of coordinates of graph
             _, ax = plt.subplots()
             ax.set(xlim=(-self.grid_limit-1, self.grid_limit+1), ylim=(-self.grid_limit-1, self.grid_limit+1), aspect='equal')
 
+            # draw grid lines
+            ax.grid(which='both', color='grey', linewidth=1, linestyle='-', alpha=0.2)
+
             # get points for each center in this iteration
             points_x_by_center, points_y_by_center = self.get_points_by_center(iter_num)
             for center_num in range(self.num_centers):
-                ax.scatter([int(self.cx[iter_num][center_num].as_string())], [int(self.cy[iter_num][center_num].as_string())], marker='o', c='#000')
-                ax.annotate(f"c_{center_num}", (int(self.cx[iter_num][center_num].as_string()), int(self.cy[iter_num][center_num].as_string())))
                 x = points_x_by_center[center_num]
                 y = points_y_by_center[center_num]
                 ax.scatter(x, y)
                 for i in range(len(x)):
                     ax.annotate(center_num, (x[i], y[i]))
+                ax.scatter([int(self.cx[iter_num][center_num].as_string())], [int(self.cy[iter_num][center_num].as_string())], marker='o', c='#000', alpha=0.2)
+                ax.annotate(f"c_{center_num}", (int(self.cx[iter_num][center_num].as_string()), int(self.cy[iter_num][center_num].as_string())))
             plt.show()

@@ -47,12 +47,6 @@ class KMeans(object):
         # corresponding to the center that is closest to the point
 
         ## Enforcing constraints that should always be true:
-        # self.points_within_grid()
-        # self.no_duplicate_points()
-        # self.centers_within_grid()
-        # self.point_centers_are_valid_center_numbers()
-        # self.points_have_closest_center()
-        # self.centers_correctly_updated()
         self.run_model()
 
 
@@ -95,23 +89,6 @@ class KMeans(object):
             for center_num in range(self.num_centers):
                 dist = self.distance(point_num, center_num, iter_num)
                 self.s.add(assigned_center_dist <= dist)
-    
-    def centers_correctly_updated(self):
-        print("centers correctly updated")
-        for iter_num in range(self.num_iters - 1):
-            prev_iter = iter_num
-            next_iter = iter_num + 1
-
-            for center_num in range(self.num_centers):
-                prev_x_points, prev_y_points = self.get_center_points(center_num, prev_iter)
-                cx_next, cy_next = Select(self.centers_x[next_iter], center_num), Select(self.centers_y[next_iter], center_num)
-                if len(prev_x_points) > 0:
-                    self.s.add(cx_next * len(prev_x_points) == Sum(prev_x_points))
-                    self.s.add(cy_next * len(prev_y_points) == Sum(prev_y_points))
-                else:
-                    cx_prev, cy_prev = Select(self.centers_x[prev_iter], center_num), Select(self.centers_y[prev_iter], center_num)
-                    self.s.add(cx_prev == cx_next)
-                    self.s.add(cy_prev == cy_next)
 
     def run_model(self):
         ## Independent of iterations:
@@ -120,7 +97,6 @@ class KMeans(object):
 
         ## Iteration specific properties:
         for iter_num in range(self.num_iters):
-            print("iter_num", iter_num)
             self.centers_within_grid(iter_num) # All centers are within the grid
             self.point_centers_are_valid_center_numbers(iter_num)
             self.points_have_closest_center(iter_num)
@@ -130,14 +106,10 @@ class KMeans(object):
                 # 1. extract point centers for this iteration
                 pt_centers = {center_num: [] for center_num in range(self.num_centers)}
                 for point_num in range(self.num_points):
-                    print("point_num", point_num)
                     center_num = self.s.model().evaluate(self.point_centers[iter_num][point_num])
-                    print("center_num1", center_num)
                     center_num = int(center_num.as_string())
-                    print("center_num2", center_num)
                     assert (center_num in pt_centers) # shouldn't be an invalid center_num
                     pt_centers[center_num].append(point_num)
-                print("pt_centers for iter_num", iter_num, " are", pt_centers)
                 
                 # 2. extracting point x and y coordinates
                 if iter_num == 0:
@@ -227,29 +199,6 @@ class KMeans(object):
         cx, cy = Select(self.centers_x[iter_num], center_num), Select(self.centers_y[iter_num], center_num)
 
         return Abs(px - cx) + Abs(py - cy)
-    
-    def get_center_points(self, center_num, iter_num: int):
-        print("get center points")
-        print(f"center num: {center_num}")
-        print(f"iter_num: {iter_num}")
-        center_points_x = [] # x coordinates of points with this center
-        center_points_y = [] # y coordinates of points with this center
-        for point_num in range(self.num_points):
-            pt_center_num = self.point_centers[iter_num][point_num]
-            # if pt_center_num == center_num: # BUG: ArithRef vs int (so always false)
-            if self.is_same_center(center_num, pt_center_num, iter_num):
-                center_points_x.append(self.points_x[point_num])
-                center_points_y.append(self.points_y[point_num])
-        print("center points x:", center_points_x)
-        print("center pointns y:", center_points_y)
-        return center_points_x, center_points_y
-
-    def is_same_center(self, center_num: int, center_var: ArithRef, iter_num: int) -> bool:
-        num_cx = Select(self.centers_x[iter_num], center_num)
-        var_cx = Select(self.centers_x[iter_num], center_var)
-        if num_cx == var_cx:
-            return True
-        return False
 
 
 def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):

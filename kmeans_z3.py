@@ -52,13 +52,19 @@ class KMeans(object):
 
     ##### FUNCTIONS ENFORCING CONSTRAINTS ON SOLVER VARIABLES #####
     
-    def points_within_grid(self): # Ensures that all points are within the defined grid
+    def points_within_grid(self):
+        """
+        Ensures that all of the datapoints lie within the bounds of the defined grid
+        """
         print("points within grid")
         for i in range(self.num_points):
             self.s.add(And(self.points_x[i] >= -self.grid_limit, self.points_x[i] <= self.grid_limit))
             self.s.add(And(self.points_y[i] >= -self.grid_limit, self.points_y[i] <= self.grid_limit))
     
     def no_duplicate_points(self):
+        """
+        Ensures that there are no duplicated datapoints (all datapoints should be unique)
+        """
         print("no duplicate points")
         for i in range(self.num_points):
             for j in range(i+1, self.num_points, 1):
@@ -66,7 +72,13 @@ class KMeans(object):
                 px2, py2 = self.points_x[j], self.points_y[j]
                 self.s.add(Or(px1 != px2, py1 != py2))
     
-    def centers_within_grid(self, iter_num: int): # Ensures that all centers are within the defined grid
+    def centers_within_grid(self, iter_num: int):
+        """
+        Ensures that all cluster centers (for the specified iteration number) lie within the bounds
+        of the defined grid.
+        params:
+            iter_num: which iteration we are checking for
+        """
         print("centers within grid")
         # for iter_num in range(self.num_iters):
         for i in range(self.num_centers):

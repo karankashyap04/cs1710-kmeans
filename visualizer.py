@@ -3,6 +3,29 @@ from typing import List, Tuple, Dict
 
 class Visualizer:
     def __init__(self, num_iters: int, num_points: int, num_centers: int, grid_limit: int, px: List[int], py: List[int], cx: List[List[int]], cy: List[List[int]], pt_centers: List[List[int]]):
+        """
+        __init__ function (constructor) for the Visualizer class.
+        params:
+            num_iters:   the total number of iterations for which the model produced an instance
+            num_points:  the total number of datapoints in the instance produced by the model
+            num_centers: the total number of centers (total number of clusters) in the instance
+                         produced by the model
+            grid_limit:  how far from the origin, in each of the cardinal directions, the
+                         coordinate space was defined in the instance produced by the model
+            px:          x coordinates of all the datapoints produced by the model (coordinate
+                         for the i-th point is present at index i)
+            py:          y coordinates of all the datapoints produced by the model (coordinate
+                         for the i-th point is present at index i)
+            cx:          x coordinates of all the centers across different iterations
+                         (coordinate for j-th center during the i-th iteration is present at
+                         row i and column j i.e. at cx[i][j])
+            cy:          y coordinates of all the centers across different iterations
+                         (coordinate for j-th center during the i-th iteration is present at
+                         row i and column j i.e. at cy[i][j])
+            pt_centers:  which center each point was assigned to across iterations (center
+                         number of j-th point during the i-th iteration is present at row i
+                         and column j i.e. at pt_centers[i][j])
+        """
         self.num_iters = num_iters
         self.num_points = num_points
         self.num_centers = num_centers

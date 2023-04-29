@@ -86,6 +86,13 @@ class KMeans(object):
             self.s.add(And(Select(self.centers_y[iter_num], i) >= -self.grid_limit, Select(self.centers_y[iter_num], i) <= self.grid_limit))
     
     def point_centers_are_valid_center_numbers(self, iter_num: int):
+        """
+        Ensures that the center numbers assigned to each point (depicting which center is closest
+        to the point, and therefore, which center/cluster the point is assigned to) in the
+        specified iteration is a valid center num (between 0 and self.num_centers - 1, inclusive).
+        params:
+            iter_num: which iteration we are checking for
+        """
         print("point centers are valid center numbers")
         # for iter_num in range(self.num_iters):
         for i in range(self.num_points):
@@ -93,6 +100,12 @@ class KMeans(object):
             self.s.add(And(center_var >= 0, center_var < self.num_centers))
     
     def points_have_closest_center(self, iter_num: int):
+        """
+        Ensures that the center assigned to each point (in the specified iteration) is the center
+        that is closest to it.
+        params:
+            iter_num: which iteration we are checking for
+        """
         print("points have closest center")
         # for iter_num in range(self.num_iters):
         for point_num in range(self.num_points):
@@ -206,6 +219,15 @@ class KMeans(object):
     ##### HELPER FUNCTIONS #####
 
     def distance(self, point_num: int, center_num, iter_num: int):
+        """
+        Computes the l1 (Manhattan) distance between the point with the provided point number
+        and the center with the provided center num (based on their positions in the specified
+        iteration).
+        params:
+            point_num: the number of the point whose coordinates should be considered
+            center_num: the number of the center whose coordinates should be considered
+            iter_num: which iteration we are checking for 
+        """
         # returns the l1 (Manhattan) distance between a point and a center
         px, py = self.points_x[point_num], self.points_y[point_num]
         cx, cy = Select(self.centers_x[iter_num], center_num), Select(self.centers_y[iter_num], center_num)
@@ -216,3 +238,4 @@ class KMeans(object):
 def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):
     kmeans = KMeans(num_iters, num_points, num_centers, grid_limit)
     kmeans.run()
+

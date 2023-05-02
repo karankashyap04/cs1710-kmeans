@@ -243,6 +243,11 @@ class KMeans(object):
         return Abs(px - cx) + Abs(py - cy)
 
 
+    ##### PROPERTY VERIFICATION FUNCTIONS #####
+    # TODO: Define funcntions that add constraints for specific property verifications
+    # NOTE: Remember to use .push() and .pop() when defining these property-specific constraints
+
+
 def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):
     """
     main function that intantiates an object of the KMeans class and then runs the model.

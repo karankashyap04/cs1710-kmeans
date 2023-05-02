@@ -3,6 +3,10 @@ import argparse
 from kmeans import main
 
 if __name__ == '__main__':
+    """
+    main function that can be called from the terminal. Sets up the argparse and calls the main()
+    function in kmeans.py
+    """
     parser = argparse.ArgumentParser("SMT solver: Property Verifications of the k-Means Clustering Algorithm")
 
     parser.add_argument("-i", "--num_iters", default=5, type=int, help="Number of iterations for which to run the algorithm")

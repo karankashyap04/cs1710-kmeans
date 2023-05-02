@@ -38,6 +38,11 @@ class Visualizer:
         self.pt_centers = pt_centers
     
     def get_points_by_center(self, iter_num: int) -> Tuple[Dict[int, List[int]], Dict[int, List[int]]]:
+        """
+        Identifies the points that are assigned to each center in the specified iteration.
+        params:
+            iter_num: which iteration to consider
+        """
         points_x_by_center = {center_num: [] for center_num in range(self.num_centers)}
         points_y_by_center = {center_num: [] for center_num in range(self.num_centers)}
         for point_num in range(self.num_points):
@@ -45,13 +50,15 @@ class Visualizer:
             pt_center_num = int(pt_center_num.as_string())
             assert pt_center_num in points_x_by_center
             assert pt_center_num in points_y_by_center
-            # points_x_by_center[pt_center_num].append(int(self.px[point_num].as_string()))
-            # points_y_by_center[pt_center_num].append(int(self.py[point_num].as_string()))
             points_x_by_center[pt_center_num].append(self.px[point_num])
             points_y_by_center[pt_center_num].append(self.py[point_num])
         return points_x_by_center, points_y_by_center
     
     def visualize(self):
+        """
+        Primary visualization code: defines matplotlib subplots, creates color-coded plots and
+        displays them (creates and displays the visualization).
+        """
         for iter_num in range(self.num_iters):
             # set limits of coordinates of graph
             _, ax = plt.subplots()

@@ -47,7 +47,7 @@ class KMeans(object):
         # corresponding to the center that is closest to the point
 
         ## Enforcing constraints that should always be true:
-        self.run_model()
+        self.create_model()
 
 
     ##### FUNCTIONS ENFORCING CONSTRAINTS ON SOLVER VARIABLES #####
@@ -115,7 +115,10 @@ class KMeans(object):
                 dist = self.distance(point_num, center_num, iter_num)
                 self.s.add(assigned_center_dist <= dist)
 
-    def run_model(self):
+    def create_model(self):
+        """
+        Constructs model constraints across all iterations
+        """
         ## Independent of iterations:
         self.points_within_grid() # All points are within the grid
         self.no_duplicate_points() # No points are duplicates
@@ -176,6 +179,11 @@ class KMeans(object):
                 raise Exception("Impossible instance: UNSAT at an intermediate step!")
     
     def run(self):
+        """
+        Runs the model whose constraints have been defined by previously calling the create_model
+        function. Checks if the result is satisfiable; if it is, evaluates model variables and
+        runs the visualization script.
+        """
         result = self.s.check()
         if result == sat:
             print("SATISFIABLE")
@@ -187,10 +195,10 @@ class KMeans(object):
             print("UNSATISFIABLE")
     
     def evaluate_model_vars(self):
-        # px, py = [], [] # x and y point coordinates (coordinate of i'th point at index i)
-        # for point_num in range(self.num_points):
-        #     px.append(self.s.model().evaluate(self.points_x[point_num]))
-        #     py.append(self.s.model().evaluate(self.points_y[point_num]))
+        """
+        Evaluates the model's variables: evaluates all the z3 variables associated with some satisfiable
+        instance and organizes values into datastructures that can be fed into the visualization script
+        """
         px, py = list(self.points_x.values()), list(self.points_y.values())
         print("px:", px)
         print("py:", py)
@@ -236,6 +244,15 @@ class KMeans(object):
 
 
 def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):
+    """
+    main function that intantiates an object of the KMeans class and then runs the model.
+    params:
+        num_iters: number of iterations for which to run the algorithm
+        num_points: number of datapoints
+        num_centers: number of centers
+        grid_limit: dimensions of the grid (ex: if the grid_limit is 5, then the coordinates go from
+                                            -5.0 to 5.0 along both axes)
+    """
     kmeans = KMeans(num_iters, num_points, num_centers, grid_limit)
     kmeans.run()
 

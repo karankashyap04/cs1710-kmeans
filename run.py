@@ -1,6 +1,6 @@
 import argparse
 
-from kmeans_z3 import main
+from kmeans import main
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("SMT solver: Property Verifications of the k-Means Clustering Algorithm")

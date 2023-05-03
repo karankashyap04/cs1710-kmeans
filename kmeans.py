@@ -26,7 +26,7 @@ class KMeans(object):
         def create_initial_x_centers(iter_num: int=0):
             cx = Array(f"cx_{iter_num}", IntSort(), IntSort())
             for center_num in range(self.num_centers):
-                cx = Store(cx, center_num, Int(f"cs_{center_num}_{iter_num}"))
+                cx = Store(cx, center_num, Int(f"cx_{center_num}_{iter_num}"))
             return cx
         def create_initial_y_centers(iter_num: int=0):
             cy = Array(f"cy_{iter_num}", IntSort(), IntSort())
@@ -128,8 +128,10 @@ class KMeans(object):
             self.centers_within_grid(iter_num) # All centers are within the grid
             self.point_centers_are_valid_center_numbers(iter_num)
             self.points_have_closest_center(iter_num)
+            # self.overlap_centers(iter_num)
             temp_result = self.s.check()
             if temp_result == sat:
+
                 ### Assigning the centers for the next iteration ###
                 # 1. extract point centers for this iteration
                 pt_centers = {center_num: [] for center_num in range(self.num_centers)}
@@ -167,6 +169,21 @@ class KMeans(object):
                         cx.append(sum(x_coords) // n)
                         cy.append(sum(y_coords) // n)
                 
+                # storing the values for iteration 0 centers 
+                # so that z3 doesn't 're-evaluate' in a manner that becomes inconsistent with the final result
+                # which was happening when they were stored as z3 centers
+                if iter_num == 0:
+                    center_x = Array(f"cx_{iter_num}", IntSort(), IntSort())
+                    center_y = Array(f"cy_{iter_num}", IntSort(), IntSort())
+                    for center_num in range(self.num_centers):
+                        x = self.s.model().evaluate(Select(self.centers_x[iter_num], center_num))
+                        center_x = Store(center_x, center_num, int(x.as_string()))
+                        y = self.s.model().evaluate(Select(self.centers_y[iter_num], center_num))
+                        center_y = Store(center_y, center_num, int(y.as_string()))
+                    self.centers_x[iter_num] = center_x
+                    self.centers_y[iter_num] = center_y
+
+
                 # 4. update the values of self.centers_x and self.centers_y
                 center_x = Array(f"cx_{iter_num+1}", IntSort(), IntSort())
                 center_y = Array(f"cy_{iter_num+1}", IntSort(), IntSort())
@@ -246,6 +263,14 @@ class KMeans(object):
     ##### PROPERTY VERIFICATION FUNCTIONS #####
     # TODO: Define funcntions that add constraints for specific property verifications
     # NOTE: Remember to use .push() and .pop() when defining these property-specific constraints
+    def overlap_centers(self, iter_num: int):
+        i, j = Ints('i j')
+        self.s.add(And(i >= 0, i < self.num_centers))
+        self.s.add(And(j >= 0, j < self.num_centers))
+        self.s.add(i != j)
+
+        self.s.add(Exists([i, j], And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
+                                      Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j))))
 
 
 def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):

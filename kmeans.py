@@ -23,8 +23,8 @@ class KMeans(object):
         # Solver
         self.s = Solver()
 
-        self.points_x = {i: Int(f"px_{i}") for i in range(self.num_points)}
-        self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
+        # self.points_x = {i: Int(f"px_{i}") for i in range(self.num_points)}
+        # self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
 
         def create_initial_x_centers(iter_num: int=0):
             cx = Array(f"cx_{iter_num}", IntSort(), IntSort())
@@ -38,30 +38,43 @@ class KMeans(object):
             return cy
 
         # self.centers_x = {iter_num: create_x_centers() for iter_num in range(self.num_iters)}
-        self.centers_x = {0: create_initial_x_centers()} 
+        # self.centers_x = {0: create_initial_x_centers()} 
         # self.centers_y = {iter_num: create_y_centers(iter_num) for iter_num in range(self.num_iters)}
-        self.centers_y = {0: create_initial_y_centers()}
+        # self.centers_y = {0: create_initial_y_centers()}
 
         # center for some point
         def create_point_centers(iter_num: int):
             return {i: Int(f"center_{i}_{iter_num}") for i in range(num_points)}
-        self.point_centers = {iter_num: create_point_centers(iter_num) for iter_num in range(self.num_iters)}
+        # self.point_centers = {iter_num: create_point_centers(iter_num) for iter_num in range(self.num_iters)}
         # Each point is mapped to an int which we will constrain such that it is equal to the key
         # corresponding to the center that is closest to the point
 
         ## Enforcing constraints that should always be true:
         flag = False
+        break_i = break_j = False
         for i in range(-self.grid_limit, self.grid_limit + 1):
             for j in range(-self.grid_limit, self.grid_limit + 1):
-                try:
-                    self.s.push()
-                    self.s.add(self.points_x[0] == i)
-                    self.s.add(self.points_y[0] == j)
-                    self.create_model()
-                    flag = True
+                for k in range(self.num_points):
+                    self.points_x = {i: Int(f"px_{i}") for i in range(self.num_points)}
+                    self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
+                    self.centers_x = {0: create_initial_x_centers()} 
+                    self.centers_y = {0: create_initial_y_centers()}
+                    self.point_centers = {iter_num: create_point_centers(iter_num) for iter_num in range(self.num_iters)}
+                    try:
+                        self.s.push()
+                        self.s.add(self.points_x[k] == i)
+                        self.s.add(self.points_y[k] == j)
+                        self.create_model()
+                        flag = True
+                        break_i = True
+                        break_j = True
+                        break
+                    except UnsatException:
+                        self.s.pop()
+                if break_j:
                     break
-                except UnsatException:
-                    self.s.pop()
+            if break_i:
+                break
 
         if not flag:
             print("Unsat")
@@ -147,7 +160,10 @@ class KMeans(object):
             self.point_centers_are_valid_center_numbers(iter_num)
             self.points_have_closest_center(iter_num)
             # self.overlap_centers(iter_num)
-            self.empty_center(iter_num)
+            # self.empty_center(iter_num)
+            if iter_num == self.num_iters - 1:
+                # self.overlap_centers_end()
+                self.empty_center_end()
             temp_result = self.s.check()
             if temp_result == sat:
 
@@ -155,8 +171,11 @@ class KMeans(object):
                 # 1. extract point centers for this iteration
                 pt_centers = {center_num: [] for center_num in range(self.num_centers)}
                 for point_num in range(self.num_points):
+                    # if iter_num == 0:
                     center_num = self.s.model().evaluate(self.point_centers[iter_num][point_num])
                     center_num = int(center_num.as_string())
+                    # else:
+                    #     center_num = self.point_centers[iter_num][point_num]
                     self.point_centers[iter_num][point_num] = center_num
                     assert (center_num in pt_centers) # shouldn't be an invalid center_num
                     pt_centers[center_num].append(point_num)
@@ -303,14 +322,35 @@ class KMeans(object):
         self.s.add(And(j >= 0, j < self.num_centers))
         self.s.add(i != j)
 
-        self.s.add(Exists([i, j], And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
-                                      Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j))))
+        # self.s.add(Exists([i, j], And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
+        #                               Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j))))
+        self.s.add(And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
+                                Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j)))
+        
+    def overlap_centers_end(self):
+        i, j = Ints('i j')
+        self.s.add(And(i >= 0, i < self.num_centers))
+        self.s.add(And(j >= 0, j < self.num_centers))
+        self.s.add(i != j)
+
+        # self.s.add(Exists([i, j], And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
+        #                               Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j))))
+        self.s.add(And(Select(self.centers_x[self.num_iters - 1], i) == Select(self.centers_x[self.num_iters - 1], j), 
+                                Select(self.centers_y[self.num_iters - 1], i) == Select(self.centers_y[self.num_iters - 1], j)))
     
     def empty_center(self, iter_num: int):
         c_num = Int(f"empty_center_{iter_num}")
         constraints = []
         for point_num in range(self.num_points):
             constraints.append(self.point_centers[iter_num][point_num] != c_num)
+        self.s.add(And(c_num >= 0, c_num < self.num_centers))
+        self.s.add(And(constraints))
+        
+    def empty_center_end(self):
+        c_num = Int(f"empty_center_{self.num_iters - 1}")
+        constraints = []
+        for point_num in range(self.num_points):
+            constraints.append(self.point_centers[self.num_iters - 1][point_num] != c_num)
         self.s.add(And(c_num >= 0, c_num < self.num_centers))
         self.s.add(And(constraints))
 

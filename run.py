@@ -21,4 +21,6 @@ if __name__ == '__main__':
     grid_limit = args.grid_limit
 
     ## TODO: Call the main() function of the kmeans-z3 file with the arguments extracted above
+    # push and pop a constraint on point 1 forcing it to be at i, j within a double for loop then it'll try 36 different instances
+
     main(num_iters, num_points, num_centers, grid_limit)

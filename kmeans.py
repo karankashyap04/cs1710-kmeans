@@ -1,6 +1,9 @@
 from z3 import *
 from visualizer import Visualizer
 
+class UnsatException(Exception):
+    pass
+
 class KMeans(object):
 
     def __init__(self, num_iters: int, num_points: int, num_centers: int, grid_limit: int):
@@ -47,7 +50,22 @@ class KMeans(object):
         # corresponding to the center that is closest to the point
 
         ## Enforcing constraints that should always be true:
-        self.create_model()
+        flag = False
+        for i in range(-self.grid_limit, self.grid_limit + 1):
+            for j in range(-self.grid_limit, self.grid_limit + 1):
+                try:
+                    self.s.push()
+                    self.s.add(self.points_x[0] == i)
+                    self.s.add(self.points_y[0] == j)
+                    self.create_model()
+                    flag = True
+                    break
+                except UnsatException:
+                    self.s.pop()
+
+        if not flag:
+            print("Unsat")
+
 
 
     ##### FUNCTIONS ENFORCING CONSTRAINTS ON SOLVER VARIABLES #####
@@ -208,7 +226,7 @@ class KMeans(object):
                 print("ccy:", ccy)
                 # print("self cx:", self.centers_x)
             else:
-                raise Exception("Impossible instance: UNSAT at an intermediate step!")
+                raise UnsatException("Impossible instance: UNSAT at an intermediate step!")
     
     def run(self):
         """
@@ -293,7 +311,8 @@ class KMeans(object):
         constraints = []
         for point_num in range(self.num_points):
             constraints.append(self.point_centers[iter_num][point_num] != c_num)
-        self.s.add(Exists([c_num], And(constraints)))
+        self.s.add(And(c_num >= 0, c_num < self.num_centers))
+        self.s.add(And(constraints))
 
 
 def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):

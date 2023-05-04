@@ -47,7 +47,7 @@ class Visualizer:
         points_y_by_center = {center_num: [] for center_num in range(self.num_centers)}
         for point_num in range(self.num_points):
             pt_center_num = self.pt_centers[iter_num][point_num]
-            pt_center_num = int(pt_center_num.as_string())
+            # pt_center_num = int(pt_center_num.as_string())
             assert pt_center_num in points_x_by_center
             assert pt_center_num in points_y_by_center
             points_x_by_center[pt_center_num].append(self.px[point_num])

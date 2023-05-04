@@ -129,6 +129,7 @@ class KMeans(object):
             self.point_centers_are_valid_center_numbers(iter_num)
             self.points_have_closest_center(iter_num)
             # self.overlap_centers(iter_num)
+            self.empty_center(iter_num)
             temp_result = self.s.check()
             if temp_result == sat:
 
@@ -138,6 +139,7 @@ class KMeans(object):
                 for point_num in range(self.num_points):
                     center_num = self.s.model().evaluate(self.point_centers[iter_num][point_num])
                     center_num = int(center_num.as_string())
+                    self.point_centers[iter_num][point_num] = center_num
                     assert (center_num in pt_centers) # shouldn't be an invalid center_num
                     pt_centers[center_num].append(point_num)
                 
@@ -153,6 +155,8 @@ class KMeans(object):
                     self.points_y = {point_num: py[point_num] for point_num in range(self.num_points)}
                 else:
                     px, py = list(self.points_x.values()), list(self.points_y.values())
+                print("px:", px)
+                print("py:", py)
                 
                 # 3. compute new center values
                 cx, cy = [], []
@@ -175,23 +179,34 @@ class KMeans(object):
                 if iter_num == 0:
                     center_x = Array(f"cx_{iter_num}", IntSort(), IntSort())
                     center_y = Array(f"cy_{iter_num}", IntSort(), IntSort())
+                    ccx, ccy = [], []
                     for center_num in range(self.num_centers):
                         x = self.s.model().evaluate(Select(self.centers_x[iter_num], center_num))
+                        ccx.append(int(x.as_string()))
                         center_x = Store(center_x, center_num, int(x.as_string()))
                         y = self.s.model().evaluate(Select(self.centers_y[iter_num], center_num))
+                        ccy.append(int(y.as_string()))
                         center_y = Store(center_y, center_num, int(y.as_string()))
                     self.centers_x[iter_num] = center_x
                     self.centers_y[iter_num] = center_y
+                    print("ccx:", ccx)
+                    print("ccy:", ccy)
 
 
                 # 4. update the values of self.centers_x and self.centers_y
+                ccx, ccy = [], []
                 center_x = Array(f"cx_{iter_num+1}", IntSort(), IntSort())
                 center_y = Array(f"cy_{iter_num+1}", IntSort(), IntSort())
                 for center_num in range(self.num_centers):
                     center_x = Store(center_x, center_num, cx[center_num])
+                    ccx.append(cx[center_num])
+                    ccy.append(cy[center_num])
                     center_y = Store(center_y, center_num, cy[center_num])
                 self.centers_x[iter_num+1] = center_x
                 self.centers_y[iter_num+1] = center_y
+                print("ccx:", ccx)
+                print("ccy:", ccy)
+                # print("self cx:", self.centers_x)
             else:
                 raise Exception("Impossible instance: UNSAT at an intermediate step!")
     
@@ -201,15 +216,15 @@ class KMeans(object):
         function. Checks if the result is satisfiable; if it is, evaluates model variables and
         runs the visualization script.
         """
-        result = self.s.check()
-        if result == sat:
-            print("SATISFIABLE")
-            px, py, cx, cy, pt_centers = self.evaluate_model_vars()
-            # Visualize instance:
-            visualizer = Visualizer(self.num_iters, self.num_points, self.num_centers, self.grid_limit, px, py, cx, cy, pt_centers)
-            visualizer.visualize()
-        else:
-            print("UNSATISFIABLE")
+        # result = self.s.check()
+        # if result == sat:
+        #     print("SATISFIABLE")
+        px, py, cx, cy, pt_centers = self.evaluate_model_vars()
+        # Visualize instance:
+        visualizer = Visualizer(self.num_iters, self.num_points, self.num_centers, self.grid_limit, px, py, cx, cy, pt_centers)
+        visualizer.visualize()
+        # else:
+            # print("UNSATISFIABLE")
     
     def evaluate_model_vars(self):
         """
@@ -235,7 +250,8 @@ class KMeans(object):
         for iter_num in range(self.num_iters):
             iter_centers = []
             for point_num in range(self.num_points):
-                iter_centers.append(self.s.model().evaluate(self.point_centers[iter_num][point_num]))
+                # iter_centers.append(self.s.model().evaluate(self.point_centers[iter_num][point_num]))
+                iter_centers.append(self.point_centers[iter_num][point_num])
             pt_centers.append(iter_centers)
         print("pt_centers:", pt_centers)
         return px, py, cx, cy, pt_centers
@@ -271,6 +287,13 @@ class KMeans(object):
 
         self.s.add(Exists([i, j], And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
                                       Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j))))
+    
+    def empty_center(self, iter_num: int):
+        c_num = Int(f"empty_center_{iter_num}")
+        constraints = []
+        for point_num in range(self.num_points):
+            constraints.append(self.point_centers[iter_num][point_num] != c_num)
+        self.s.add(Exists([c_num], And(constraints)))
 
 
 def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):

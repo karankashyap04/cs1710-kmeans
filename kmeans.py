@@ -8,7 +8,7 @@ class UnsatException(Exception):
 
 class KMeans(object):
 
-    def __init__(self, num_iters: int, num_points: int, num_centers: int, grid_limit: int):
+    def __init__(self, num_iters: int, num_points: int, num_centers: int, grid_limit: int, random_centers: bool):
         """
         params:
             num_iters: number of iterations for which to run the algorithm
@@ -16,11 +16,13 @@ class KMeans(object):
             num_centers: number of centers
             grid_limit: dimensions of the grid (ex: if grid_limit is 5, then the coordinates go from
                         -5.0 to 5.0 along both axes)
+            random_centers: flag indicating whether or not to randomly initialize center coordinates (via constraints)
         """
         self.num_iters = num_iters
         self.num_points = num_points
         self.num_centers = num_centers
         self.grid_limit = grid_limit
+        self.random_centers = random_centers
 
         # Solver
         self.s = Solver()
@@ -161,7 +163,8 @@ class KMeans(object):
         ## Independent of iterations:
         self.points_within_grid() # All points are within the grid
         self.no_duplicate_points() # No points are duplicates
-        self.assign_random_initial_centers()
+        if self.random_centers:
+            self.assign_random_initial_centers()
 
         ## Iteration specific properties:
         for iter_num in range(self.num_iters):
@@ -346,7 +349,7 @@ class KMeans(object):
         self.s.add(And(constraints))
 
 
-def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):
+def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int, random_centers: bool):
     """
     main function that intantiates an object of the KMeans class and then runs the model.
     params:
@@ -356,5 +359,5 @@ def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):
         grid_limit: dimensions of the grid (ex: if the grid_limit is 5, then the coordinates go from
                                             -5.0 to 5.0 along both axes)
     """
-    kmeans = KMeans(num_iters, num_points, num_centers, grid_limit)
+    kmeans = KMeans(num_iters, num_points, num_centers, grid_limit, random_centers)
     kmeans.run()

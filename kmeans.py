@@ -1,6 +1,8 @@
 from z3 import *
+import random
 from visualizer import Visualizer
 
+# Defining a custom exception class
 class UnsatException(Exception):
     pass
 
@@ -102,6 +104,16 @@ class KMeans(object):
                 px2, py2 = self.points_x[j], self.points_y[j]
                 self.s.add(Or(px1 != px2, py1 != py2))
     
+    def assign_random_initial_centers(self):
+        iter_num = 0 # since we are only performing the random assignment for the initial configuration
+        for center_num in range(self.num_centers):
+            cx_var = Select(self.centers_x[iter_num], center_num)
+            cy_var = Select(self.centers_y[iter_num], center_num)
+            random_x = random.randint(-self.grid_limit, self.grid_limit)
+            random_y = random.randint(-self.grid_limit, self.grid_limit)
+            self.s.add(cx_var == random_x)
+            self.s.add(cy_var == random_y)
+    
     def centers_within_grid(self, iter_num: int):
         """
         Ensures that all cluster centers (for the specified iteration number) lie within the bounds
@@ -149,6 +161,7 @@ class KMeans(object):
         ## Independent of iterations:
         self.points_within_grid() # All points are within the grid
         self.no_duplicate_points() # No points are duplicates
+        self.assign_random_initial_centers()
 
         ## Iteration specific properties:
         for iter_num in range(self.num_iters):

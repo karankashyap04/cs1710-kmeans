@@ -2,6 +2,9 @@ import argparse
 
 from kmeans import main
 
+AVAILABLE_PROPERTIES = {"EMPTY_CENTER", "OVERLAP_CENTER", "EMPTY_CENTER_EACH_ITERATION",
+                        "OVERLAP_CENTER_EACH_ITERATION"}
+
 if __name__ == '__main__':
     """
     main function that can be called from the terminal. Sets up the argparse and calls the main()
@@ -15,6 +18,8 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--grid_limit", default=5, type=int, help="board dimension (each axis goes from -grid_limit to grid_limit)")
     parser.add_argument("--random_centers", default=False, action="store_true",
                         help="flag indicating whether or not to random initialize centers")
+    parser.add_argument("-prop", "--property", default=None, type=str,
+                        help=f"which property to verify (if any); must be one of {AVAILABLE_PROPERTIES}")
 
     args = parser.parse_args()
     num_iters = args.num_iters
@@ -22,5 +27,9 @@ if __name__ == '__main__':
     num_centers = args.num_centers
     grid_limit = args.grid_limit
     random_centers = args.random_centers
+    property = args.property
 
-    main(num_iters, num_points, num_centers, grid_limit, random_centers)
+    if property and (property not in AVAILABLE_PROPERTIES):
+        raise ValueError(f"Unrecognized property provided; must be one of {AVAILABLE_PROPERTIES}")
+
+    main(num_iters, num_points, num_centers, grid_limit, random_centers, property)

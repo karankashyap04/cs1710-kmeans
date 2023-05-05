@@ -8,7 +8,7 @@ class UnsatException(Exception):
 
 class KMeans(object):
 
-    def __init__(self, num_iters: int, num_points: int, num_centers: int, grid_limit: int, random_centers: bool):
+    def __init__(self, num_iters: int, num_points: int, num_centers: int, grid_limit: int, random_centers: bool, property: str):
         """
         params:
             num_iters: number of iterations for which to run the algorithm
@@ -17,12 +17,14 @@ class KMeans(object):
             grid_limit: dimensions of the grid (ex: if grid_limit is 5, then the coordinates go from
                         -5.0 to 5.0 along both axes)
             random_centers: flag indicating whether or not to randomly initialize center coordinates (via constraints)
+            property: which property to verify (if any)
         """
         self.num_iters = num_iters
         self.num_points = num_points
         self.num_centers = num_centers
         self.grid_limit = grid_limit
         self.random_centers = random_centers
+        self.property = property
 
         # Solver
         self.s = Solver()
@@ -171,11 +173,15 @@ class KMeans(object):
             self.centers_within_grid(iter_num) # All centers are within the grid
             self.point_centers_are_valid_center_numbers(iter_num)
             self.points_have_closest_center(iter_num)
-            # self.overlap_centers(iter_num)
-            # self.empty_center(iter_num)
+            if self.property == "OVERLAP_CENTER_EACH_ITERATION":
+                self.overlap_centers(iter_num)
+            if self.property == "EMPTY_CENTER_EACH_ITERATION":
+                self.empty_center(iter_num)
             if iter_num == self.num_iters - 1:
-                # self.overlap_centers_end()
-                self.empty_center_end()
+                if self.property == "OVERLAP_CENTER":
+                    self.overlap_centers_end()
+                if self.property == "EMPTY_CENTER":
+                    self.empty_center_end()
             temp_result = self.s.check()
             if temp_result == sat:
 
@@ -349,7 +355,7 @@ class KMeans(object):
         self.s.add(And(constraints))
 
 
-def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int, random_centers: bool):
+def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int, random_centers: bool, property: str):
     """
     main function that intantiates an object of the KMeans class and then runs the model.
     params:
@@ -359,5 +365,5 @@ def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int, ran
         grid_limit: dimensions of the grid (ex: if the grid_limit is 5, then the coordinates go from
                                             -5.0 to 5.0 along both axes)
     """
-    kmeans = KMeans(num_iters, num_points, num_centers, grid_limit, random_centers)
+    kmeans = KMeans(num_iters, num_points, num_centers, grid_limit, random_centers, property)
     kmeans.run()

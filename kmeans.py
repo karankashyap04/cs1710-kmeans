@@ -49,7 +49,6 @@ class KMeans(object):
         # Each point is mapped to an int which we will constrain such that it is equal to the key
         # corresponding to the center that is closest to the point
 
-        ## Enforcing constraints that should always be true:
         flag = False
         break_i = break_j = False
         for i in range(-self.grid_limit, self.grid_limit + 1):
@@ -111,7 +110,6 @@ class KMeans(object):
             iter_num: which iteration we are checking for
         """
         print("centers within grid")
-        # for iter_num in range(self.num_iters):
         for i in range(self.num_centers):
             self.s.add(And(Select(self.centers_x[iter_num], i) >= -self.grid_limit, Select(self.centers_x[iter_num], i) <= self.grid_limit))
             self.s.add(And(Select(self.centers_y[iter_num], i) >= -self.grid_limit, Select(self.centers_y[iter_num], i) <= self.grid_limit))
@@ -125,7 +123,6 @@ class KMeans(object):
             iter_num: which iteration we are checking for
         """
         print("point centers are valid center numbers")
-        # for iter_num in range(self.num_iters):
         for i in range(self.num_points):
             center_var = self.point_centers[iter_num][i]
             self.s.add(And(center_var >= 0, center_var < self.num_centers))
@@ -138,7 +135,6 @@ class KMeans(object):
             iter_num: which iteration we are checking for
         """
         print("points have closest center")
-        # for iter_num in range(self.num_iters):
         for point_num in range(self.num_points):
             center_num_var = self.point_centers[iter_num][point_num]
             assigned_center_dist = self.distance(point_num, center_num_var, iter_num)
@@ -171,11 +167,8 @@ class KMeans(object):
                 # 1. extract point centers for this iteration
                 pt_centers = {center_num: [] for center_num in range(self.num_centers)}
                 for point_num in range(self.num_points):
-                    # if iter_num == 0:
                     center_num = self.s.model().evaluate(self.point_centers[iter_num][point_num])
                     center_num = int(center_num.as_string())
-                    # else:
-                    #     center_num = self.point_centers[iter_num][point_num]
                     self.point_centers[iter_num][point_num] = center_num
                     assert (center_num in pt_centers) # shouldn't be an invalid center_num
                     pt_centers[center_num].append(point_num)
@@ -216,34 +209,22 @@ class KMeans(object):
                 if iter_num == 0:
                     center_x = Array(f"cx_{iter_num}", IntSort(), IntSort())
                     center_y = Array(f"cy_{iter_num}", IntSort(), IntSort())
-                    ccx, ccy = [], []
                     for center_num in range(self.num_centers):
                         x = self.s.model().evaluate(Select(self.centers_x[iter_num], center_num))
-                        ccx.append(int(x.as_string()))
                         center_x = Store(center_x, center_num, int(x.as_string()))
                         y = self.s.model().evaluate(Select(self.centers_y[iter_num], center_num))
-                        ccy.append(int(y.as_string()))
                         center_y = Store(center_y, center_num, int(y.as_string()))
                     self.centers_x[iter_num] = center_x
                     self.centers_y[iter_num] = center_y
-                    print("ccx:", ccx)
-                    print("ccy:", ccy)
-
 
                 # 4. update the values of self.centers_x and self.centers_y
-                ccx, ccy = [], []
                 center_x = Array(f"cx_{iter_num+1}", IntSort(), IntSort())
                 center_y = Array(f"cy_{iter_num+1}", IntSort(), IntSort())
                 for center_num in range(self.num_centers):
                     center_x = Store(center_x, center_num, cx[center_num])
-                    ccx.append(cx[center_num])
-                    ccy.append(cy[center_num])
                     center_y = Store(center_y, center_num, cy[center_num])
                 self.centers_x[iter_num+1] = center_x
                 self.centers_y[iter_num+1] = center_y
-                print("ccx:", ccx)
-                print("ccy:", ccy)
-                # print("self cx:", self.centers_x)
             else:
                 raise UnsatException("Impossible instance: UNSAT at an intermediate step!")
     
@@ -309,23 +290,20 @@ class KMeans(object):
         # returns the l1 (Manhattan) distance between a point and a center
         px, py = self.points_x[point_num], self.points_y[point_num]
         cx, cy = Select(self.centers_x[iter_num], center_num), Select(self.centers_y[iter_num], center_num)
-
         return Abs(px - cx) + Abs(py - cy)
 
 
     ##### PROPERTY VERIFICATION FUNCTIONS #####
-    # TODO: Define funcntions that add constraints for specific property verifications
-    # NOTE: Remember to use .push() and .pop() when defining these property-specific constraints
     def overlap_centers(self, iter_num: int):
         i, j = Ints('i j')
         self.s.add(And(i >= 0, i < self.num_centers))
         self.s.add(And(j >= 0, j < self.num_centers))
         self.s.add(i != j)
 
-        # self.s.add(Exists([i, j], And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
-        #                               Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j))))
-        self.s.add(And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
-                                Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j)))
+        self.s.add(And(
+            Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j),
+            Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j))
+        )
         
     def overlap_centers_end(self):
         i, j = Ints('i j')
@@ -333,10 +311,10 @@ class KMeans(object):
         self.s.add(And(j >= 0, j < self.num_centers))
         self.s.add(i != j)
 
-        # self.s.add(Exists([i, j], And(Select(self.centers_x[iter_num], i) == Select(self.centers_x[iter_num], j), 
-        #                               Select(self.centers_y[iter_num], i) == Select(self.centers_y[iter_num], j))))
-        self.s.add(And(Select(self.centers_x[self.num_iters - 1], i) == Select(self.centers_x[self.num_iters - 1], j), 
-                                Select(self.centers_y[self.num_iters - 1], i) == Select(self.centers_y[self.num_iters - 1], j)))
+        self.s.add(And(
+            Select(self.centers_x[self.num_iters - 1], i) == Select(self.centers_x[self.num_iters - 1], j),
+            Select(self.centers_y[self.num_iters - 1], i) == Select(self.centers_y[self.num_iters - 1], j))
+        )
     
     def empty_center(self, iter_num: int):
         c_num = Int(f"empty_center_{iter_num}")
@@ -367,4 +345,3 @@ def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int):
     """
     kmeans = KMeans(num_iters, num_points, num_centers, grid_limit)
     kmeans.run()
-

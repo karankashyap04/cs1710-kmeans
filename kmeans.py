@@ -92,7 +92,6 @@ class KMeans(object):
         """
         Ensures that all of the datapoints lie within the bounds of the defined grid
         """
-        print("points within grid")
         for i in range(self.num_points):
             self.s.add(And(self.points_x[i] >= -self.grid_limit, self.points_x[i] <= self.grid_limit))
             self.s.add(And(self.points_y[i] >= -self.grid_limit, self.points_y[i] <= self.grid_limit))
@@ -101,7 +100,6 @@ class KMeans(object):
         """
         Ensures that there are no duplicated datapoints (all datapoints should be unique)
         """
-        print("no duplicate points")
         for i in range(self.num_points):
             for j in range(i+1, self.num_points, 1):
                 px1, py1 = self.points_x[i], self.points_y[i]
@@ -125,7 +123,6 @@ class KMeans(object):
         params:
             iter_num: which iteration we are checking for
         """
-        print("centers within grid")
         for i in range(self.num_centers):
             self.s.add(And(Select(self.centers_x[iter_num], i) >= -self.grid_limit, Select(self.centers_x[iter_num], i) <= self.grid_limit))
             self.s.add(And(Select(self.centers_y[iter_num], i) >= -self.grid_limit, Select(self.centers_y[iter_num], i) <= self.grid_limit))
@@ -138,7 +135,6 @@ class KMeans(object):
         params:
             iter_num: which iteration we are checking for
         """
-        print("point centers are valid center numbers")
         for i in range(self.num_points):
             center_var = self.point_centers[iter_num][i]
             self.s.add(And(center_var >= 0, center_var < self.num_centers))
@@ -150,7 +146,6 @@ class KMeans(object):
         params:
             iter_num: which iteration we are checking for
         """
-        print("points have closest center")
         for point_num in range(self.num_points):
             center_num_var = self.point_centers[iter_num][point_num]
             assigned_center_dist = self.distance(point_num, center_num_var, iter_num)
@@ -207,8 +202,6 @@ class KMeans(object):
                     self.points_y = {point_num: py[point_num] for point_num in range(self.num_points)}
                 else:
                     px, py = list(self.points_x.values()), list(self.points_y.values())
-                print("px:", px)
-                print("py:", py)
                 
                 # 3. compute new center values
                 cx, cy = [], []

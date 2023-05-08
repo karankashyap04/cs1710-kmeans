@@ -77,4 +77,6 @@ class Visualizer:
                     ax.annotate(center_num, (x[i], y[i]))
                 ax.scatter([int(self.cx[iter_num][center_num].as_string())], [int(self.cy[iter_num][center_num].as_string())], marker='o', c='#000', alpha=0.2)
                 ax.annotate(f"c_{center_num}", (int(self.cx[iter_num][center_num].as_string()), int(self.cy[iter_num][center_num].as_string())))
+            # figManager = plt.get_current_fig_manager()
+            # figManager.full_screen_toggle()
             plt.show()

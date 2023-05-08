@@ -57,7 +57,11 @@ We were able to accomplish all of our Foundation and Target goals set out at the
 
 Our reach goals involved trying different kinds of center assignments and to predict how these assignment heuristics impact the algorithm's output. While we didn't quite get to this, we did build an interface through which initial center values can be manually provided. This is currently being used to randomly assign initial center values (since this is how the traditional algorithm operates), however, it can be repurposed to allow any kind of manual center assignment with some trivial changes.
 
-# Notes (remove later)
+## Video Demo
+
+[Link to Google Drive](https://drive.google.com/file/d/19noJMzvvV7Z-h0A6pw8qlXdTID9qQ1hl/view?usp=sharing)
+
+<!-- # Notes (remove later)
 
 **Note:** When we have our final demo with Tim, he mentioned that we should make sure to remind him of our desire to potentially make animations, regardless of whether or not we actually land up needing them... he said he wants to be reminded of that as a potential extension of Sterling visualizationns (through a `d3` library or something like that).
 
@@ -72,4 +76,4 @@ Our reach goals involved trying different kinds of center assignments and to pre
 
 **Properties we can verify**:
 - Center has no points assigned (empty cluster)
-- Overlapping centers at the end (lose a cluster)
+- Overlapping centers at the end (lose a cluster) -->

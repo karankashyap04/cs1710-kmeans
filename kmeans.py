@@ -29,9 +29,6 @@ class KMeans(object):
         # Solver
         self.s = Solver()
 
-        # self.points_x = {i: Int(f"px_{i}") for i in range(self.num_points)}
-        # self.points_y = {i: Int(f"py_{i}") for i in range(self.num_points)}
-
         def create_initial_x_centers(iter_num: int=0):
             cx = Array(f"cx_{iter_num}", IntSort(), IntSort())
             for center_num in range(self.num_centers):
@@ -43,18 +40,11 @@ class KMeans(object):
                 cy = Store(cy, center_num, Int(f"cy_{center_num}_{iter_num}"))
             return cy
 
-        # self.centers_x = {iter_num: create_x_centers() for iter_num in range(self.num_iters)}
-        # self.centers_x = {0: create_initial_x_centers()} 
-        # self.centers_y = {iter_num: create_y_centers(iter_num) for iter_num in range(self.num_iters)}
-        # self.centers_y = {0: create_initial_y_centers()}
-
         # center for some point
         def create_point_centers(iter_num: int):
             return {i: Int(f"center_{i}_{iter_num}") for i in range(num_points)}
-        # self.point_centers = {iter_num: create_point_centers(iter_num) for iter_num in range(self.num_iters)}
-        # Each point is mapped to an int which we will constrain such that it is equal to the key
-        # corresponding to the center that is closest to the point
 
+        # look through relevant search space
         flag = False
         break_i = break_j = False
         for i in range(-self.grid_limit, self.grid_limit + 1):
@@ -107,6 +97,9 @@ class KMeans(object):
                 self.s.add(Or(px1 != px2, py1 != py2))
     
     def assign_random_initial_centers(self):
+        """
+        Ensures that the initial locations of the centers are based on a random assignment
+        """
         iter_num = 0 # since we are only performing the random assignment for the initial configuration
         for center_num in range(self.num_centers):
             cx_var = Select(self.centers_x[iter_num], center_num)
@@ -249,15 +242,10 @@ class KMeans(object):
         function. Checks if the result is satisfiable; if it is, evaluates model variables and
         runs the visualization script.
         """
-        # result = self.s.check()
-        # if result == sat:
-        #     print("SATISFIABLE")
         px, py, cx, cy, pt_centers = self.evaluate_model_vars()
         # Visualize instance:
         visualizer = Visualizer(self.num_iters, self.num_points, self.num_centers, self.grid_limit, px, py, cx, cy, pt_centers)
         visualizer.visualize()
-        # else:
-            # print("UNSATISFIABLE")
     
     def evaluate_model_vars(self):
         """
@@ -302,7 +290,6 @@ class KMeans(object):
             center_num: the number of the center whose coordinates should be considered
             iter_num: which iteration we are checking for 
         """
-        # returns the l1 (Manhattan) distance between a point and a center
         px, py = self.points_x[point_num], self.points_y[point_num]
         cx, cy = Select(self.centers_x[iter_num], center_num), Select(self.centers_y[iter_num], center_num)
         return Abs(px - cx) + Abs(py - cy)
@@ -310,6 +297,10 @@ class KMeans(object):
 
     ##### PROPERTY VERIFICATION FUNCTIONS #####
     def overlap_centers(self, iter_num: int):
+        """
+        Adds constraints to check that at the end of the algorithm (after the last iteration), at
+        least 2 centers are at the same location (overlap)
+        """
         i, j = Ints('i j')
         self.s.add(And(i >= 0, i < self.num_centers))
         self.s.add(And(j >= 0, j < self.num_centers))
@@ -321,6 +312,10 @@ class KMeans(object):
         )
         
     def overlap_centers_end(self):
+        """
+        Adds constraints to check that at each iteration of the algorithm, at least 2 centers are
+        at the same location (overlap)
+        """
         i, j = Ints('i j')
         self.s.add(And(i >= 0, i < self.num_centers))
         self.s.add(And(j >= 0, j < self.num_centers))
@@ -332,6 +327,10 @@ class KMeans(object):
         )
     
     def empty_center(self, iter_num: int):
+        """
+        Adds constraints to check that at the end of the algorithm (after the last iteration), at
+        least one center (at least one cluster) is assigned no datapoints
+        """
         c_num = Int(f"empty_center_{iter_num}")
         constraints = []
         for point_num in range(self.num_points):
@@ -340,6 +339,10 @@ class KMeans(object):
         self.s.add(And(constraints))
         
     def empty_center_end(self):
+        """
+        Adds constraints to check that at each iteration of the algorithm, at least one center (at
+        least one cluster) is assigned no datapoints
+        """
         c_num = Int(f"empty_center_{self.num_iters - 1}")
         constraints = []
         for point_num in range(self.num_points):
@@ -357,6 +360,8 @@ def main(num_iters: int, num_points: int, num_centers: int, grid_limit: int, ran
         num_centers: number of centers
         grid_limit: dimensions of the grid (ex: if the grid_limit is 5, then the coordinates go from
                                             -5.0 to 5.0 along both axes)
+        random_centers: flag indicating whether or not to randomly initialize center coordinates (via constraints)
+        property: which property to verify (if any)
     """
     kmeans = KMeans(num_iters, num_points, num_centers, grid_limit, random_centers, property)
     kmeans.run()

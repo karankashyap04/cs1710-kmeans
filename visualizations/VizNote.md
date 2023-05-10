@@ -8,6 +8,8 @@ For some instance that we are running, let:
 - `num_iters`: number of iterations
 - `num_points`: number of datapoints
 - `num_centers`: number of centers (number of clusters)
-- `grid_limit`: grid limit (how far, on each of the 4 cardinal directions from the origin we define our space until
+- `grid_limit`: grid limit (how far, along each of the 4 cardinal directions from the origin we define our space until)
 
-The visualization file's name for this instance would be: `i<num_iters>_p<num_points>_c<num_centers>_g<grid_limit>.pdf` (where each of the variables placed withi angular brackets `<>` are replaced with their numerical value).
+The visualization file's name for this instance would be: `i<num_iters>_p<num_points>_c<num_centers>_g<grid_limit>.pdf` (where each of the variables placed within angular brackets `<>` are replaced with their numerical value).
+- If there is a `_random` in the filename after the grid limit, then it indicates that the centers were randomly initialized in the instance
+- If there is a value which corresponds to one of the properties that can be verified at the end of the filename, then that property was being checked in the instance
